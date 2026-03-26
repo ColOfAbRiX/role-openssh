@@ -1,0 +1,939 @@
+# {{ ansible_managed }}
+#
+#	$OpenBSD: sshd_config,v 1.93 2014/01/10 05:59:19 djm Exp $
+
+# This is the sshd server system-wide configuration file. See
+# sshd_config(5) for more information.
+
+# This sshd was compiled with PATH=/usr/local/bin:/usr/bin
+
+## General daemon ##
+
+{% if sshd_PidFile is defined and sshd_PidFile != '' %}
+# Specifies the file that contains the process ID of the SSH daemon. The
+# default is /var/run/sshd.pid.
+PidFile {{ sshd_PidFile }}
+
+{% endif %}
+{% if sshd_Protocol is defined and sshd_Protocol != '' %}
+# Specifies the protocol versions sshd(8) supports. The possible values are '1'
+# and '2'. Multiple versions must be comma-separated. The default is '2'.
+# Note that the order of the protocol list does not indicate preference, because
+# the client selects among multiple protocol versions offered by the server.
+# Specifying "2,1" is identical to "1,2".
+Protocol {{ sshd_Protocol }}
+
+{% endif %}
+## Logging ##
+
+{% if sshd_SyslogFacility is defined and sshd_SyslogFacility != '' %}
+# Gives the facility code that is used when logging messages from sshd(8). The
+# possible values are: DAEMON, USER, AUTH, AUTHPRIV, LOCAL0, LOCAL1, LOCAL2,
+# LOCAL3, LOCAL4, LOCAL5, LOCAL6, LOCAL7. The default is AUTH.
+SyslogFacility {{ sshd_SyslogFacility }}
+
+{% endif %}
+{% if sshd_LogLevel is defined and sshd_LogLevel != '' %}
+# Gives the verbosity level that is used when logging messages from sshd(8).
+# The possible values are: QUIET, FATAL, ERROR, INFO, VERBOSE, DEBUG, DEBUG1,
+# DEBUG2, and DEBUG3. The default is INFO. DEBUG and DEBUG1 are equivalent.
+# DEBUG2 and DEBUG3 each specify higher levels of debugging output. Logging
+# with a DEBUG level violates the privacy of users and is not recommended.
+LogLevel {{ sshd_LogLevel }}
+
+{% endif %}
+## Network configuration ##
+
+{% if sshd_AddressFamily is defined and sshd_AddressFamily != '' %}
+# Specifies which address family should be used by sshd(8). Valid arguments are
+# "any", "inet" (use IPv4 only), or "inet6" (use IPv6 only). The default is
+# "any".
+AddressFamily {{ sshd_AddressFamily}}
+
+{% endif %}
+{% if sshd_Port is defined and sshd_Port != '' %}
+# Specifies the port number that sshd(8) listens on. The default is 22.
+# Multiple options of this type are permitted. See also ListenAddress.
+Port {{ sshd_Port }}
+
+{% endif %}
+{% if sshd_ListenAddresses is defined and sshd_ListenAddresses != [] %}
+# Specifies the local addresses sshd(8) should listen on. The following forms
+# may be used:
+#
+#    ListenAddress host|IPv4_addr|IPv6_addr
+#    ListenAddress host|IPv4_addr:port
+#    ListenAddress [host|IPv6_addr]:port
+#
+# If port is not specified, sshd will listen on the address and all prior Port
+# options specified. The default is to listen on all local addresses. Multiple
+# ListenAddress options are permitted. Additionally, any Port options must
+# precede this option for non-port qualified addresses.
+{% for address in sshd_ListenAddresses %}
+ListenAddress {{ address }}
+{% endfor %}
+
+{% endif %}
+{% if sshd_UseDNS is defined and sshd_UseDNS != '' %}
+# Specifies whether sshd(8) should look up the remote host name and check that
+# the resolved host name for the remote IP address maps back to the very same IP
+# address. The default is "yes".
+UseDNS {{ sshd_UseDNS }}
+
+{% endif %}
+{% if sshd_IPQoS is defined and sshd_IPQoS != '' %}
+# Specifies the IPv4 type-of-service or DSCP class for the connection. Accepted
+# values are "af11", "af12", "af13", "af21", "af22", "af23", "af31", "af32",
+# "af33", "af41", "af42", "af43", "cs0", "cs1", "cs2", "cs3", "cs4", "cs5",
+# "cs6", "cs7", "ef", "lowdelay", "throughput", "reliability", or a numeric
+# value. This option may take one or two arguments, separated by whitespace.
+# If one argument is specified, it is used as the packet class unconditionally.
+# If two values are specified, the first is automatically selected for
+# interactive sessions and the second for non-interactive sessions. The default
+# is "lowdelay" for interactive sessions and "throughput" for non-interactive
+# sessions.
+IPQoS {{ sshd_IPQoS }}
+
+{% endif %}
+{% if sshd_Compression is defined and sshd_Compression != '' %}
+# Specifies whether compression is allowed, or delayed until the user has
+# authenticated successfully. The argument must be "yes", "delayed", or "no".
+# The default is "delayed".
+Compression {{ sshd_Compression }}
+
+{% endif %}
+{% if sshd_ClientAliveInterval is defined and sshd_ClientAliveInterval != '' %}
+# Sets a timeout interval in seconds after which if no data has been received
+# from the client, sshd(8) will send a message through the encrypted channel to
+# request a response from the client. The default is 0, indicating that these
+# messages will not be sent to the client. This option applies to protocol
+# version 2 only.
+ClientAliveInterval {{ sshd_ClientAliveInterval }}
+
+{% endif %}
+{% if sshd_ClientAliveCountMax is defined and sshd_ClientAliveCountMax != '' %}
+# Sets the number of client alive messages (see below) which may be sent without
+# sshd(8) receiving any messages back from the client. If this threshold is
+# reached while client alive messages are being sent, sshd will disconnect the
+# client, terminating the session. It is important to note that the use of
+# client alive messages is very different from TCPKeepAlive (below). The client
+# alive messages are sent through the encrypted channel and therefore will not
+# be spoofable. The TCP keepalive option enabled by TCPKeepAlive is spoofable.
+# The client alive mechanism is valuable when the client or server depend on
+# knowing when a connection has become inactive.
+#
+# The default value is 3. If ClientAliveInterval (see below) is set to 15, and
+# ClientAliveCountMax is left at the default, unresponsive SSH clients will be
+# disconnected after approximately 45 seconds. This option applies to protocol
+# version 2 only.
+ClientAliveCountMax {{ sshd_ClientAliveCountMax }}
+
+{% endif %}
+{% if sshd_TCPKeepAlive is defined and sshd_TCPKeepAlive != '' %}
+# Specifies whether the system should send TCP keepalive messages to the other
+# side. If they are sent, death of the connection or crash of one of the
+# machines will be properly noticed. However, this means that connec‐ tions
+# will die if the route is down temporarily, and some people find it annoying.
+# On the other hand, if TCP keepalives are not sent, sessions may hang
+# indefinitely on the server, leaving "ghost" users and consuming server
+# resources.
+#
+# The default is "yes" (to send TCP keepalive messages), and the server will
+# notice if the network goes down or the client host crashes. This avoids
+# infinitely hanging sessions.
+#
+# To disable TCP keepalive messages, the value should be set to "no".
+TCPKeepAlive {{ sshd_TCPKeepAlive }}
+
+{% endif %}
+## Authentication ##
+
+{% if sshd_RSAAuthentication is defined and sshd_RSAAuthentication != '' %}
+# Specifies whether pure RSA authentication is allowed. The default is "yes".
+# This option applies to protocol version 1 only.
+RSAAuthentication {{ sshd_RSAAuthentication }}
+
+{% endif %}
+{% if sshd_PubkeyAuthentication is defined and sshd_PubkeyAuthentication != '' %}
+# Specifies whether public key authentication is allowed. The default is "yes".
+# Note that this option applies to protocol version 2 only.
+PubkeyAuthentication {{ sshd_PubkeyAuthentication }}
+
+{% endif %}
+{% if sshd_KbdInteractiveAuthentication is defined and sshd_KbdInteractiveAuthentication != '' %}
+# Specifies whether to allow keyboard-interactive authentication. The argument
+# to this keyword must be "yes" or "no". The default is to use whatever value
+# ChallengeResponseAuthentication is set to (by default "yes").
+KbdInteractiveAuthentication {{ sshd_KbdInteractiveAuthentication }}
+
+{% endif %}
+{% if sshd_ChallengeResponseAuthentication is defined and sshd_ChallengeResponseAuthentication != '' %}
+# Specifies whether challenge-response authentication is allowed (e.g. via PAM
+# or though authentication styles supported in login.conf(5)) The default is
+# "yes".
+ChallengeResponseAuthentication {{ sshd_ChallengeResponseAuthentication }}
+
+{% endif %}
+{% if sshd_PasswordAuthentication is defined and sshd_PasswordAuthentication != '' %}
+# Specifies whether password authentication is allowed. The default is "yes".
+PasswordAuthentication {{ sshd_PasswordAuthentication }}
+
+{% endif %}
+{% if sshd_GSSAPIAuthentication is defined and sshd_GSSAPIAuthentication != '' %}
+# Specifies whether user authentication based on GSSAPI is allowed. The default
+# is "no". Note that this option applies to protocol version 2 only.
+GSSAPIAuthentication {{ sshd_GSSAPIAuthentication }}
+
+{% endif %}
+{% if sshd_KerberosAuthentication is defined and sshd_KerberosAuthentication != '' %}
+# Specifies whether the password provided by the user for PasswordAuthentication
+# will be validated through the Kerberos KDC. To use this option, the server
+# needs a Kerberos servtab which allows the verification of the KDC's identity.
+# The default is "no".
+KerberosAuthentication {{ sshd_KerberosAuthentication }}
+
+{% endif %}
+{% if sshd_HostbasedAuthentication is defined and sshd_HostbasedAuthentication != '' %}
+# Specifies whether rhosts or /etc/hosts.equiv authentication together with
+# successful public key client host authentication is allowed (host-based
+# authentication). This option is similar to RhostsRSAAuthentication and
+# applies to protocol version 2 only. The default is "no".
+HostbasedAuthentication {{ sshd_HostbasedAuthentication }}
+
+{% endif %}
+{% if sshd_RhostsRSAAuthentication is defined and sshd_RhostsRSAAuthentication != '' %}
+# Specifies whether rhosts or /etc/hosts.equiv authentication together with
+# successful RSA host authentication is allowed. The default is "no". This
+# option applies to protocol version 1 only.
+RhostsRSAAuthentication {{ sshd_RhostsRSAAuthentication }}
+
+{% endif %}
+{% if sshd_HostbasedUsesNameFromPacketOnly is defined and sshd_HostbasedUsesNameFromPacketOnly != '' %}
+# Specifies whether or not the server will attempt to perform a reverse name
+# lookup when matching the name in the ~/.shosts, ~/.rhosts, and
+# /etc/hosts.equiv files during HostbasedAuthentication. A setting of "yes"
+# means that sshd(8) uses the name supplied by the client rather than attempting
+# to resolve the name from the TCP connection itself. The default is "no".
+HostbasedUsesNameFromPacketOnly {{ sshd_HostbasedUsesNameFromPacketOnly }}
+
+{% endif %}
+{% if sshd_XAuthLocation is defined and sshd_XAuthLocation != '' %}
+# Specifies the full pathname of the xauth(1) program. The default is
+# /usr/bin/xauth.
+XAuthLocation {{ sshd_XAuthLocation }}
+
+{% endif %}
+{% if sshd_AuthenticationMethods is defined and sshd_AuthenticationMethods != [] %}
+# Specifies the authentication methods that must be successfully completed for a
+# user to be granted access. This option must be followed by one or more comma-
+# separated lists of authentication method names, or by the single string "any"
+# to indicate the default behaviour of accepting any single authentication
+# method. if the default is overridden, then successful authentication requires
+# completion of every method in at least one of these lists.
+#
+# For example, an argument of "publickey,password publickey,keyboard-
+# interactive" would require the user to complete public key authentication,
+# followed by either password or keyboard interactive authentication. Only
+# methods that are next in one or more lists are offered at each stage, so for
+# this example, it would not be possible to attempt password or keyboard-
+# interactive authentication before public key.
+#
+# For keyboard interactive authentication it is also possible to restrict
+# authentication to a specific device by appending a colon followed by the
+# device identifier "bsdauth", "pam", or "skey", depending on the server
+# configuration. For example, "keyboard-interactive:bsdauth" would restrict
+# keyboard interactive authentication to the "bsdauth" device.
+#
+# This option is only available for SSH protocol 2 and will yield a fatal error
+# if enabled if protocol 1 is also enabled. Note that each authentication
+# method listed should also be explicitly enabled in the configura‐tion. The
+# default "any" is not to require multiple authentication; successful completion
+# of a single authentication method is sufficient.
+AuthenticationMethods {{ sshd_AuthenticationMethods | join(' ') }}
+
+{% endif %}
+## Host keys and Certificates ##
+
+{% if sshd_HostKeys is defined and sshd_HostKeys != [] %}
+# Specifies a file containing a private host key used by SSH. The default is
+# /etc/ssh/ssh_host_key for protocol version 1, and /etc/ssh/ssh_host_dsa_key,
+# /etc/ssh/ssh_host_ecdsa_key, /etc/ssh/ssh_host_ed25519_key and
+# /etc/ssh/ssh_host_rsa_key for protocol version 2. Note that sshd(8) will
+# refuse to use a file if it is group/world-accessible. It is possible to have
+# multiple host key files. "rsa1" keys are used for version 1 and "dsa",
+# "ecdsa", "ed25519" or "rsa" are used for version 2 of the SSH protocol. It is
+# also possible to specify public host key files instead. In this case
+# operations on the private key will be delegated to an ssh-agent(1).
+{% for host_key in sshd_HostKeys %}
+HostKey {{ ssh_config_path }}/{{ host_key }}
+{% endfor %}
+
+{% endif %}
+{% if sshd_RekeyLimit is defined and sshd_RekeyLimit != '' %}
+# Specifies the maximum amount of data that may be transmitted before the
+# session key is renegotiated, optionally followed a maximum amount of time that
+# may pass before the session key is renegotiated. The first argu‐ ment is
+# specified in bytes and may have a suffix of 'K', 'M', or 'G' to indicate
+# Kilobytes, Megabytes, or Gigabytes, respectively. The default is between '1G'
+# and '4G', depending on the cipher. The optional second value is specified in
+# seconds and may use any of the units documented in the TIME FORMATS section.
+# The default value for RekeyLimit is "default none", which means that rekeying
+# is performed after the cipher's default amount of data has been sent or
+# received and no time based rekeying is done. This option applies to protocol
+# version 2 only.
+RekeyLimit {{ sshd_RekeyLimit }}
+
+{% endif %}
+{% if sshd_KeyRegenerationInterval is defined and sshd_KeyRegenerationInterval != '' %}
+# In protocol version 1, the ephemeral server key is automatically regenerated
+# after this many seconds (if it has been used). The purpose of regeneration is
+# to prevent decrypting captured sessions by later breaking into the machine and
+# stealing the keys. The key is never stored anywhere. If the value is 0, the
+# key is never regenerated. The default is 3600 (seconds).
+KeyRegenerationInterval {{ sshd_KeyRegenerationInterval }}
+
+{% endif %}
+{% if sshd_ServerKeyBits is defined and sshd_ServerKeyBits != '' %}
+# Defines the number of bits in the ephemeral protocol version 1 server key.
+# The minimum value is 512, and the default is 1024.
+ServerKeyBits {{ sshd_ServerKeyBits }}
+
+{% endif %}
+{% if sshd_HostCertificate is defined and sshd_HostCertificate != '' %}
+# Specifies a file containing a public host certificate. The certificate's
+# public key must match a private host key already specified by HostKey. The
+# default behaviour of sshd(8) is not to load any certificates.
+HostCertificate {{ sshd_HostCertificate }}
+
+{% endif %}
+{% if sshd_HostKeyAgent is defined and sshd_HostKeyAgent != '' %}
+# Identifies the UNIX-domain socket used to communicate with an agent that has
+# access to the private host keys. If "SSH_AUTH_SOCK" is specified, the
+# location of the socket will be read from the SSH_AUTH_SOCK environ‐ ment
+# variable.
+HostKeyAgent {{ sshd_HostKeyAgent }}
+
+{% endif %}
+{% if sshd_RevokedKeys is defined and sshd_RevokedKeys != '' %}
+# Specifies revoked public keys. Keys listed in this file will be refused for
+# public key authentication. Note that if this file is not readable, then public
+# key authentication will be refused for all users. Keys may be specified as a
+# text file, listing one public key per line, or as an OpenSSH Key Revocation
+# List (KRL) as generated by ssh-keygen(1). For more information on KRLs, see
+# the KEY REVOCATION LISTS section in ssh-keygen(1).
+RevokedKeys {{ sshd_RevokedKeys }}
+
+{% endif %}
+## Authorized Client Keys and CA ##
+
+{% if sshd_AuthorizedKeysFiles is defined and sshd_AuthorizedKeysFiles != [] %}
+# Specifies the file that contains the public keys that can be used for user
+# authentication. The format is described in the AUTHORIZED_KEYS FILE FORMAT
+# section of sshd(8). AuthorizedKeysFile may contain tokens of the form %T
+# which are substituted during connection setup. The following tokens are
+# defined: %% is replaced by a literal '%', %h is replaced by the home directory
+# of the user being authenticated, and %u is replaced by the username of that
+# user. After expansion, AuthorizedKeysFile is taken to be an absolute path or
+# one relative to the user's home directory. Multiple files may be listed,
+# separated by whitespace.
+AuthorizedKeysFile {{ sshd_AuthorizedKeysFiles | join(' ') }}
+
+{% endif %}
+{% if sshd_AuthorizedPrincipalsFile is defined and sshd_AuthorizedPrincipalsFile != '' %}
+# Specifies a file that lists principal names that are accepted for certificate
+# authentication. When using certificates signed by a key listed in
+# TrustedUserCAKeys, this file lists names, one of which must appear in the
+# certificate for it to be accepted for authentication. Names are listed one
+# per line preceded by key options (as described in AUTHORIZED_KEYS FILE FORMAT
+# in sshd(8)). Empty lines and comments starting with '#' are ignored.
+#
+# AuthorizedPrincipalsFile may contain tokens of the form %T which are
+# substituted during connection setup. The following tokens are defined: %% is
+# replaced by a literal '%', %h is replaced by the home directory of the user
+# being authenticated, and %u is replaced by the username of that user. After
+# expansion, AuthorizedPrincipalsFile is taken to be an absolute path or one
+# relative to the user's home directory.
+#
+# The default is "none", i.e. not to use a principals file – in this case, the
+# username of the user must appear in a certificate's principals list for it to
+# be accepted. Note that AuthorizedPrincipalsFile is only used when
+# authentication proceeds using a CA listed in TrustedUserCAKeys and is not
+# consulted for certification authorities trusted via ~/.ssh/authorized_keys,
+# though the principals= key option offers a similar facility (see sshd(8) for
+# details).
+AuthorizedPrincipalsFile {{ sshd_AuthorizedPrincipalsFile }}
+
+{% endif %}
+{% if sshd_AuthorizedKeysCommand is defined and sshd_AuthorizedKeysCommand != '' %}
+# Specifies a program to be used to look up the user's public keys. The program
+# must be owned by root and not writable by group or others. It will be invoked
+# with a single argument of the username being authenticated, and should produce
+# on standard output zero or more lines of authorized_keys output (see
+# AUTHORIZED_KEYS in sshd(8)). If a key supplied by AuthorizedKeysCommand does
+# not successfully authenticate and authorize the user then public key
+# authentication continues using the usual AuthorizedKeysFile files. By
+# default, no AuthorizedKeysCommand is run.
+AuthorizedKeysCommand {{ sshd_AuthorizedKeysCommand }}
+
+{% endif %}
+{% if sshd_AuthorizedKeysCommandUser is defined and sshd_AuthorizedKeysCommandUser != '' %}
+# Specifies the user under whose account the AuthorizedKeysCommand is run. It
+# is recommended to use a dedicated user that has no other role on the host than
+# running authorized keys commands.
+AuthorizedKeysCommandUser {{ sshd_AuthorizedKeysCommandUser }}
+
+{% endif %}
+{% if sshd_TrustedUserCAKeys is defined and sshd_TrustedUserCAKeys != '' %}
+# Specifies a file containing public keys of certificate authorities that are
+# trusted to sign user certificates for authentication. Keys are listed one per
+# line; empty lines and comments starting with '#' are allowed. If a certificate
+# is presented for authentication and has its signing CA key listed in this
+# file, then it may be used for authentication for any user listed in the
+# certificate's principals list. Note that certificates that lack a list of
+# principals will not be permitted for authentication using TrustedUserCAKeys.
+# For more details on certificates, see the CERTIFICATES section in ssh-
+# keygen(1).
+TrustedUserCAKeys {{ sshd_TrustedUserCAKeys }}
+
+{% endif %}
+## Security ##
+
+{% if sshd_PermitEmptyPasswords is defined and sshd_PermitEmptyPasswords != '' %}
+# When password authentication is allowed, it specifies whether the server
+# allows login to accounts with empty password strings. The default is "no".
+PermitEmptyPasswords {{ sshd_PermitEmptyPasswords }}
+
+{% endif %}
+{% if sshd_ShowPatchLevel is defined and sshd_ShowPatchLevel != '' %}
+# Specifies whether sshd will display the patch level of the binary in the
+# identification string. The patch level is set at compile-time. The default
+# is "no". This option applies to protocol version 1 only.
+ShowPatchLevel {{ sshd_ShowPatchLevel }}
+
+{% endif %}
+{% if sshd_PermitRootLogin is defined and sshd_PermitRootLogin != '' %}
+# Specifies whether root can log in using ssh(1). The argument must be "yes",
+# "without-password", "forced-commands-only", or "no". The default is "yes".
+#
+# If this option is set to "without-password", password authentication is
+# disabled for root.
+#
+# If this option is set to "forced-commands-only", root login with public key
+# authentication will be allowed, but only if the command option has been
+# specified (which may be useful for taking remote backups even if root login is
+# normally not allowed). All other authentication methods are disabled for
+# root.
+#
+# If this option is set to "no", root is not allowed to log in.
+PermitRootLogin {{ sshd_PermitRootLogin }}
+
+{% endif %}
+{% if sshd_IgnoreUserKnownHosts is defined and sshd_IgnoreUserKnownHosts != '' %}
+# Specifies whether sshd(8) should ignore the user's ~/.ssh/known_hosts during
+# RhostsRSAAuthentication or HostbasedAuthentication. The default is "no".
+IgnoreUserKnownHosts {{ sshd_IgnoreUserKnownHosts }}
+
+{% endif %}
+{% if sshd_ExposeAuthenticationMethods is defined and sshd_ExposeAuthenticationMethods != '' %}
+# When using SSH2, this option controls the exposure of the list of successful
+# authentication methods to PAM during the authentication and to the shell
+# environment via the SSH_USER_AUTH variable. See the description of this
+# variable for more details. Valid options are: "never" (Do not expose
+# successful authentication methods), "pam-only" (Only expose them to PAM during
+# authentication, not afterwards), "pam-and-env" (Expose them to PAM and keep
+# them in the shell environment). The default is "never".
+ExposeAuthenticationMethods {{ sshd_ExposeAuthenticationMethods }}
+
+{% endif %}
+{% if sshd_ChrootDirectory is defined and sshd_ChrootDirectory != '' %}
+# Specifies the pathname of a directory to chroot(2) to after authentication.
+# All components of the pathname must be root-owned directories that are not
+# writable by any other user or group. After the chroot, sshd(8) changes the
+# working directory to the user's home directory.
+#
+# The pathname may contain the following tokens that are expanded at runtime
+# once the connecting user has been authenticated: %% is replaced by a literal
+# '%', %h is replaced by the home directory of the user being authenticated, and
+# %u is replaced by the username of that user.
+#
+# The ChrootDirectory must contain the necessary files and directories to
+# support the user's session. For an interactive session this requires at least
+# a shell, typically sh(1), and basic /dev nodes such as null(4), zero(4),
+# stdin(4), stdout(4), stderr(4), arandom(4) and tty(4) devices. For file
+# transfer sessions using "sftp", no additional configuration of the environment
+# is necessary if the in-process sftp server is used, though sessions which use
+# logging do require /dev/log inside the chroot directory (see sftp-server(8)
+# for details).
+#
+#The default is not to chroot(2).
+ChrootDirectory {{ sshd_ChrootDirectory }}
+
+{% endif %}
+{% if sshd_IgnoreRhosts is defined and sshd_IgnoreRhosts != '' %}
+# Specifies that .rhosts and .shosts files will not be used in
+# RhostsRSAAuthentication or HostbasedAuthentication.
+#
+# /etc/hosts.equiv and /etc/ssh/shosts.equiv are still used. The default is
+# /"yes".
+IgnoreRhosts {{ sshd_IgnoreRhosts }}
+
+{% endif %}
+{% if sshd_ForceCommands is defined and sshd_ForceCommands != [] %}
+# Forces the execution of the command specified by ForceCommand, ignoring any
+# command supplied by the client and ~/.ssh/rc if present. The command is
+# invoked by using the user's login shell with the -c option. This applies to
+# shell, command, or subsystem execution. It is most useful inside a Match
+# block. The command originally supplied by the client is available in the
+# SSH_ORIGINAL_COMMAND environment variable. Specifying a command of "internal-
+# sftp" will force the use of an in-process sftp server that requires no support
+# files when used with ChrootDirectory.
+ForceCommand {{ sshd_ForceCommands | join(' ') }}
+
+{% endif %}
+{% if sshd_StrictModes is defined and sshd_StrictModes != '' %}
+# Specifies whether sshd(8) should check file modes and ownership of the user's
+# files and home directory before accepting login. This is normally desirable
+# because novices sometimes accidentally leave their directory or files world-
+# writable. The default is "yes". Note that this does not apply to
+# ChrootDirectory, whose permissions and ownership are checked unconditionally.
+StrictModes {{ sshd_StrictModes }}
+
+{% endif %}
+{% if sshd_PermitTTY is defined and sshd_PermitTTY != '' %}
+# Specifies whether pty(4) allocation is permitted. The default is "yes".
+PermitTTY {{ sshd_PermitTTY }}
+
+{% endif %}
+{% if sshd_UsePAM is defined and sshd_UsePAM != '' %}
+# Enables the Pluggable Authentication Module interface. If set to "yes" this
+# will enable PAM authentication using ChallengeResponseAuthentication and
+# PasswordAuthentication in addition to PAM account and session mod‐ ule
+# processing for all authentication types.
+#
+# Because PAM challenge-response authentication usually serves an equivalent
+# role to password authentication, you should disable either
+# PasswordAuthentication or ChallengeResponseAuthentication.
+#
+# If UsePAM is enabled, you will not be able to run sshd(8) as a non-root user.
+# The default is "no".
+UsePAM {{ sshd_UsePAM }}
+
+{% endif %}
+{% if sshd_PermitUserEnvironment is defined and sshd_PermitUserEnvironment != '' %}
+# Specifies whether ~/.ssh/environment and environment= options in
+# ~/.ssh/authorized_keys are processed by sshd(8). The default is "no".
+# Enabling environment processing may enable users to bypass access restrictions
+# in some configurations using mechanisms such as LD_PRELOAD.
+PermitUserEnvironment {{ sshd_PermitUserEnvironment }}
+
+{% endif %}
+{% if sshd_AcceptEnv is defined and sshd_AcceptEnv != [] %}
+# Specifies what environment variables sent by the client will be copied into
+# the session's environ(7). See SendEnv in ssh_config(5) for how to configure
+# the client. Note that environment passing is only supported for
+# protocol 2, and that the TERM environment variable is always sent whenever the
+# client requests a pseudo-terminal as it is required by the protocol.
+# Variables are specified by name, which may contain the wildcard
+# characters '*' and '?'. Multiple environment variables may be separated by
+# whitespace or spread across multiple AcceptEnv directives. Be warned that
+# some environment variables could be used to bypass restricted user
+# environments. For this reason, care should be taken in the use of this
+# directive. The default is not to accept any environment variables
+AcceptEnv {{ sshd_AcceptEnv | join(' ') }}
+
+{% endif %}
+## Ciphers and hashing algorithms ##
+
+{% if sshd_Ciphers is defined and sshd_Ciphers != [] %}
+# Specifies the ciphers allowed for protocol version 2. Multiple ciphers must be
+# comma-separated. The list of available ciphers may also be obtained using the
+# -Q option of ssh(1).
+Ciphers {{ sshd_Ciphers | join(',') }}
+
+{% endif %}
+{% if sshd_KexAlgorithms is defined and sshd_KexAlgorithms != [] %}
+# Specifies the available KEX (Key Exchange) algorithms. Multiple algorithms
+# must be comma-separated.
+KexAlgorithms {{ sshd_KexAlgorithms | join(',') }}
+
+{% endif %}
+{% if sshd_MACs is defined and sshd_MACs != [] %}
+# Specifies the available MAC (message authentication code) algorithms. The MAC
+# algorithm is used in protocol version 2 for data integrity protection.
+# Multiple algorithms must be comma-separated. The algorithms that contain
+# "-etm" calculate the MAC after encryption (encrypt-then-mac). These are
+# considered safer and their use recommended. The default is:
+MACs {{ sshd_MACs | join(',') }}
+
+{% endif %}
+## Forwarding ##
+
+{% if sshd_AllowAgentForwarding is defined and sshd_AllowAgentForwarding != '' %}
+# Specifies whether ssh-agent(1) forwarding is permitted. The default is "yes".
+# Note that disabling agent forwarding does not improve security unless users
+# are also denied shell access, as they can always install their own forwarders
+AllowAgentForwarding {{ sshd_AllowAgentForwarding }}
+
+{% endif %}
+{% if sshd_AllowTcpForwarding is defined and sshd_AllowTcpForwarding != '' %}
+# Specifies whether TCP forwarding is permitted. The available options are
+# "yes" or "all" to allow TCP forwarding, "no" to prevent all TCP forwarding,
+# "local" to allow local (from the perspective of ssh(1)) forwarding only or
+# "remote" to allow remote forwarding only. The default is "yes". Note that
+# disabling TCP forwarding does not improve security unless users are also
+# denied shell access, as they can always install their own forwarders.
+AllowTcpForwarding {{ sshd_AllowTcpForwarding }}
+
+{% endif %}
+{% if sshd_X11Forwarding is defined and sshd_X11Forwarding != '' %}
+# Specifies whether X11 forwarding is permitted. The argument must be "yes" or
+# "no". The default is "no".
+#
+# When X11 forwarding is enabled, there may be additional exposure to the server
+# and to client displays if the sshd(8) proxy display is configured to listen on
+# the wildcard address (see X11UseLocalhost below), though this is not the
+# default. Additionally, the authentication spoofing and authentication data
+# verification and substitution occur on the client side. The security risk of
+# using X11 forwarding is that the client's X11 display server may be exposed to
+# attack when the SSH client requests forwarding (see the warnings for
+# ForwardX11 in ssh_config(5)). A system administrator may have a stance in
+# which they want to protect clients that may expose themselves to attack by
+# unwittingly requesting X11 forwarding, which can warrant a "no" setting.
+#
+# Note that disabling X11 forwarding does not prevent users from forwarding X11
+# traffic, as users can always install their own forwarders. X11 forwarding is
+# automatically disabled if UseLogin is enabled.
+X11Forwarding {{ sshd_X11Forwarding }}
+
+{% endif %}
+{% if sshd_GatewayPorts is defined and sshd_GatewayPorts != '' %}
+# Specifies whether remote hosts are allowed to connect to ports forwarded for
+# the client. By default, sshd(8) binds remote port forwardings to the loopback
+# address. This prevents other remote hosts from connecting to forwarded ports.
+# GatewayPorts can be used to specify that sshd should allow remote port
+# forwardings to bind to non-loopback addresses, thus allowing other hosts to
+# connect. The argument may be "no" to force remote port forwardings to be
+# available to the local host only, "yes" to force remote port forwardings to
+# bind to the wildcard address, or "clientspecified" to allow the client to
+# select the address to which the forwarding is bound. The default is "no".
+GatewayPorts {{ sshd_GatewayPorts }}
+
+{% endif %}
+{% if sshd_PermitTunnel is defined and sshd_PermitTunnel != '' %}
+# Specifies whether tun(4) device forwarding is allowed. The argument must be
+# "yes", "point-to-point" (layer 3), "ethernet" (layer 2), or "no". Specifying
+# "yes" permits both "point-to-point" and "ethernet". The default is "no".
+PermitTunnel {{ sshd_PermitTunnel }}
+
+{% endif %}
+{% if sshd_PermitOpen is defined and sshd_PermitOpen != '' %}
+# Specifies the destinations to which TCP port forwarding is permitted. The
+# forwarding specification must be one of the following forms:
+#
+#    PermitOpen host:port
+#    PermitOpen IPv4_addr:port
+#    PermitOpen [IPv6_addr]:port
+#
+# Multiple forwards may be specified by separating them with whitespace. An
+# argument of "any" can be used to remove all restrictions and permit any
+# forwarding requests. An argument of "none" can be used to prohibit all
+# forwarding requests. Wildcard "*" can be used for host or port to allow all
+# hosts or all ports respectively. By default all port forwarding requests are
+# permitted.
+{% for permit in sshd_PermitOpen %}
+PermitOpen {{ permit }}
+{% endfor %}
+
+{% endif %}
+## GSS-API configuration ##
+
+{% if sshd_GSSAPICleanupCredentials is defined and sshd_GSSAPICleanupCredentials != '' %}
+# Specifies whether to automatically destroy the user's credentials cache on
+# logout. The default is "yes". Note that this option applies to protocol
+# version 2 only.
+GSSAPICleanupCredentials {{ sshd_GSSAPICleanupCredentials }}
+
+{% endif %}
+{% if sshd_GSSAPIStrictAcceptorCheck is defined and sshd_GSSAPIStrictAcceptorCheck != '' %}
+# Determines whether to be strict about the identity of the GSSAPI acceptor a
+# client authenticates against. If "yes" then the client must authenticate
+# against the host service on the current hostname. If "no" then the client may
+# authenticate against any service key stored in the machine's default store.
+# This facility is provided to assist with operation on multi homed machines.
+# The default is "yes". Note that this option applies only to protocol version
+# 2 GSSAPI connections, and setting it to "no" may only work with recent
+# Kerberos GSSAPI libraries.
+GSSAPIStrictAcceptorCheck {{ sshd_GSSAPIStrictAcceptorCheck }}
+
+{% endif %}
+{% if sshd_GSSAPIKeyExchange is defined and sshd_GSSAPIKeyExchange != '' %}
+# Specifies whether key exchange based on GSSAPI is allowed. GSSAPI key exchange
+# doesn't rely on ssh keys to verify host identity. The default is "no". Note
+# that this option applies to protocol version 2 only.
+GSSAPIKeyExchange {{ sshd_GSSAPIKeyExchange }}
+
+{% endif %}
+{% if sshd_GSSAPIEnablek5users is defined and sshd_GSSAPIEnablek5users != '' %}
+# Specifies whether to look at .k5users file for GSSAPI authentication access
+# control. Further details are described in ksu(1). The default is "no".
+GSSAPIEnablek5users {{ sshd_GSSAPIEnablek5users }}
+
+{% endif %}
+{% if sshd_GSSAPIStoreCredentialsOnRekey is defined and sshd_GSSAPIStoreCredentialsOnRekey != '' %}
+# Controls whether the user's GSSAPI credentials should be updated following a
+# successful connection rekeying. This option can be used to accepted renewed or
+# updated credentials from a compatible client. The default is "no".
+GSSAPIStoreCredentialsOnRekey {{ sshd_GSSAPIStoreCredentialsOnRekey }}
+
+{% endif %}
+{% if sshd_GSSAPIKexAlgorithms is defined and sshd_GSSAPIKexAlgorithms != '' %}
+# The list of key exchange algorithms that are accepted by GSSAPI key exchange.
+# Possible values are
+#
+#    ss-gex-sha1-,
+#    ss-group1-sha1-,
+#    ss-group14-sha1-
+#
+# The default is "gss-gex-sha1-,gss-group1-sha1-,gss-group14-sha1-". This
+# option only applies to protocol version 2 connections using GSSAPI.
+GSSAPIKexAlgorithms {{ sshd_GSSAPIKexAlgorithms }}
+
+{% endif %}
+## Kerberos configuration ##
+
+{% if sshd_KerberosOrLocalPasswd is defined and sshd_KerberosOrLocalPasswd != '' %}
+# If password authentication through Kerberos fails then the password will be
+# validated via any additional local mechanism such as /etc/passwd. The default
+# is "yes".
+KerberosOrLocalPasswd {{ sshd_KerberosOrLocalPasswd }}
+
+{% endif %}
+{% if sshd_KerberosTicketCleanup is defined and sshd_KerberosTicketCleanup != '' %}
+# Specifies whether to automatically destroy the user's ticket cache file on
+# logout. The default is "yes".
+KerberosTicketCleanup {{ sshd_KerberosTicketCleanup }}
+
+{% endif %}
+{% if sshd_KerberosUseKuserok is defined and sshd_KerberosUseKuserok != '' %}
+# Specifies whether to look at .k5login file for user's aliases. The default is
+# "yes".
+KerberosUseKuserok {{ sshd_KerberosUseKuserok }}
+
+{% endif %}
+## Allow/Deny Users/Groups ##
+
+{% if sshd_AllowGroups is defined and sshd_AllowGroups != [] %}
+# This keyword can be followed by a list of group name patterns, separated by
+# spaces. If specified, login is allowed only for users whose primary group or
+# supplementary group list matches one of the patterns. Only group names are
+# valid; a numerical group ID is not recognized. By default, login is allowed
+# for all groups. The allow/deny directives are processed in the following
+# order: DenyUsers, AllowUsers, DenyGroups, and finally AllowGroups. All of the
+# specified user and group tests must succeed, before user is allowed to log in.
+AllowGroups {{ sshd_AllowGroups | join(' ') }}
+
+{% endif %}
+{% if sshd_AllowUsers is defined and sshd_AllowUsers != [] %}
+# This keyword can be followed by a list of user name patterns, separated by
+# spaces. If specified, login is allowed only for user names that match one of
+# the patterns. Only user names are valid; a numerical user ID is not
+# recognized. By default, login is allowed for all users. If the pattern takes
+# the form USER@HOST then USER and HOST are separately checked, restricting
+# logins to particular users from particular hosts. The allow/deny directives
+# are processed in the following order: DenyUsers, AllowUsers, DenyGroups, and
+# finally AllowGroups. All of the specified user and group tests must succeed,
+# before user is allowed to log in.
+AllowUsers {{ sshd_AllowUsers | join(' ') }}
+
+{% endif %}
+{% if sshd_DenyGroups is defined and sshd_DenyGroups != [] %}
+# This keyword can be followed by a list of group name patterns, separated by
+# spaces. Login is disallowed for users whose primary group or supplementary
+# group list matches one of the patterns. Only group names are valid; a
+# numerical group ID is not recognized. By default, login is allowed for all
+# groups. The allow/deny directives are processed in the following order:
+# DenyUsers, AllowUsers, DenyGroups, and finally AllowGroups. All of the
+# specified user and group tests must succeed, before user is allowed to log in.
+DenyGroups {{ sshd_DenyGroups | join(' ') }}
+
+{% endif %}
+{% if sshd_DenyUsers is defined and sshd_DenyUsers != [] %}
+# This keyword can be followed by a list of user name patterns, separated by
+# spaces. Login is disallowed for user names that match one of the patterns.
+# Only user names are valid; a numerical user ID is not recognized. By default,
+# login is allowed for all users. If the pattern takes the form USER@HOST then
+# USER and HOST are separately checked, restricting logins to particular users
+# from particular hosts. The allow/deny directives are processed in the
+# following order: DenyUsers, AllowUsers, DenyGroups, and finally AllowGroups.
+# All of the specified user and group tests must succeed, before user is allowed
+# to log in.
+DenyUsers {{ sshd_DenyUsers | join(' ') }}
+
+{% endif %}
+## Users login and Sessions ##
+
+{% if sshd_UseLogin is defined and sshd_UseLogin != '' %}
+# Specifies whether login(1) is used for interactive login sessions. The
+# default is "no". Note that login(1) is never used for remote command
+# execution. Note also, that if this is enabled, X11Forwarding will be dis‐
+# abled because login(1) does not know how to handle xauth(1) cookies. If
+# UsePrivilegeSeparation is specified, it will be disabled after authentication.
+UseLogin {{ sshd_UseLogin }}
+
+{% endif %}
+{% if sshd_MaxSessions is defined and sshd_MaxSessions != '' %}
+# Specifies the maximum number of open sessions permitted per network
+# connection. The default is 10.
+MaxSessions {{ sshd_MaxSessions }}
+
+{% endif %}
+{% if sshd_MaxStartups is defined and sshd_MaxStartups != '' %}
+# Specifies the maximum number of concurrent unauthenticated connections to the
+# SSH daemon. Additional connections will be dropped until authentication
+# succeeds or the LoginGraceTime expires for a connection. The default is
+# 10:30:100.
+#
+# Alternatively, random early drop can be enabled by specifying the three colon
+# separated values "start:rate:full" (e.g. "10:30:60"). sshd(8) will refuse
+# connection attempts with a probability of "rate/100" (30%) if there are
+# currently "start" (10) unauthenticated connections. The probability increases
+# linearly and all connection attempts are refused if the number of
+# unauthenticated connections reaches "full" (60).
+MaxStartups {{ sshd_MaxStartups }}
+
+{% endif %}
+{% if sshd_MaxAuthTries is defined and sshd_MaxAuthTries != '' %}
+# Specifies the maximum number of authentication attempts permitted per
+# connection. Once the number of failures reaches half this value, additional
+# failures are logged. The default is 6.
+MaxAuthTries {{ sshd_MaxAuthTries }}
+
+{% endif %}
+{% if sshd_LoginGraceTime is defined and sshd_LoginGraceTime != '' %}
+# The server disconnects after this time if the user has not successfully logged
+# in. If the value is 0, there is no time limit. The default is 120 seconds.
+LoginGraceTime {{ sshd_LoginGraceTime }}
+
+{% endif %}
+{% if sshd_VersionAddendum is defined and sshd_VersionAddendum != '' %}
+# Optionally specifies additional text to append to the SSH protocol banner sent
+# by the server upon connection. The default is "none".
+VersionAddendum {{ sshd_VersionAddendum }}
+
+{% endif %}
+{% if sshd_Banner is defined and sshd_Banner != '' %}
+# The contents of the specified file are sent to the remote user before
+# authentication is allowed. If the argument is "none" then no banner is
+# displayed. This option is only available for protocol version 2. By default,
+# no banner is displayed.
+Banner {{ sshd_Banner }}
+
+{% endif %}
+{% if sshd_PrintMotd is defined and sshd_PrintMotd != '' %}
+# Specifies whether sshd(8) should print /etc/motd when a user logs in
+# interactively. (On some systems it is also printed by the shell,
+# /etc/profile, or equivalent.) The default is "yes".
+PrintMotd {{ sshd_PrintMotd }}
+
+{% endif %}
+{% if sshd_PrintLastLog is defined and sshd_PrintLastLog != '' %}
+# Specifies whether sshd(8) should print the date and time of the last user
+# login when a user logs in interactively. The default is "yes".
+PrintLastLog {{ sshd_PrintLastLog }}
+
+{% endif %}
+## X11 configuration ##
+
+{% if sshd_X11DisplayOffset is defined and sshd_X11DisplayOffset != '' %}
+# Specifies the first display number available for sshd(8)'s X11 forwarding.
+# This prevents sshd from interfering with real X11 servers. The default is 10.
+X11DisplayOffset {{ sshd_X11DisplayOffset }}
+
+{% endif %}
+{% if sshd_X11UseLocalhost is defined and sshd_X11UseLocalhost != '' %}
+# Specifies whether sshd(8) should bind the X11 forwarding server to the
+# loopback address or to the wildcard address. By default, sshd binds the
+# forwarding server to the loopback address and sets the hostname part of the
+# DISPLAY environment variable to "localhost". This prevents remote hosts from
+# connecting to the proxy display. However, some older X11 clients may not
+# function with this configuration. X11UseLocalhost may be set to "no" to
+# specify that the forwarding server should be bound to the wildcard address.
+# The argument must be "yes" or "no". The default is "yes".
+X11UseLocalhost {{ sshd_X11UseLocalhost }}
+
+{% endif %}
+{% if sshd_X11MaxDisplays is defined and sshd_X11MaxDisplays != '' %}
+# Specifies the maximum number of displays available for sshd(8)'s X11
+# forwarding. This prevents sshd from exhausting local ports. The default is
+# 1000.
+X11MaxDisplays {{ sshd_X11MaxDisplays }}
+
+{% endif %}
+## Subsystems ##
+
+# Configures an external subsystem (e.g. file transfer daemon). Arguments
+# should be a subsystem name and a command (with optional arguments) to execute
+# upon subsystem request.
+#
+# The command sftp-server(8) implements the "sftp" file transfer subsystem.
+#
+# Alternately the name "internal-sftp" implements an in-process "sftp" server.
+# This may simplify configurations using ChrootDirectory to force a different
+# filesystem root on clients.
+#
+# By default no subsystems are defined. Note that this option applies to
+# protocol version 2 only.
+Subsystem   sftp    /usr/libexec/openssh/sftp-server
+{% for subsystem in sshd_Subsystem | default([]) %}
+Subsystem {{ subsystem.name }} {{ subsystem.bin }}
+{% endfor %}
+
+## Conditional blocks ##
+
+# Introduces a conditional block. If all of the criteria on the Match line are
+# satisfied, the keywords on the following lines override those set in the
+# global section of the config file, until either another Match line or the end
+# of the file. If a keyword appears in multiple Match blocks that are
+# satisified, only the first instance of the keyword is applied.
+#
+# The arguments to Match are one or more criteria-pattern pairs or the single
+# token All which matches all criteria. The available criteria are User, Group,
+# Host, LocalAddress, LocalPort, and Address. The match pat‐ terns may consist
+# of single entries or comma-separated lists and may use the wildcard and
+# negation operators described in the PATTERNS section of ssh_config(5).
+#
+# The patterns in an Address criteria may additionally contain addresses to
+# match in CIDR address/masklen format, e.g. "192.0.2.0/24" or "3ffe:ffff::/32".
+# Note that the mask length provided must be consistent with the address - it is
+# an error to specify a mask length that is too long for the address or one with
+# bits set in this host portion of the address. For example, "192.0.2.0/33" and
+# "192.0.2.0/8" respectively.
+#
+# Only a subset of keywords may be used on the lines following a Match keyword.
+# Available keywords are AcceptEnv, AllowAgentForwarding, AllowGroups,
+# AllowTcpForwarding, AllowUsers, AuthenticationMethods, AuthorizedKeysCommand,
+# AuthorizedKeysCommandUser, AuthorizedKeysFile, AuthorizedPrincipalsFile,
+# Banner, ChrootDirectory, DenyGroups, DenyUsers, ForceCommand, GatewayPorts,
+# GSSAPIAuthentication, HostbasedAuthentication,
+# HostbasedUsesNameFromPacketOnly, KbdInteractiveAuthentication,
+# KerberosAuthentication, KerberosUseKuserok, MaxAuthTries, MaxSessions,
+# PasswordAuthentication, PermitEmptyPasswords, PermitOpen, PermitRootLogin,
+# PermitTTY, PermitTunnel, PubkeyAuthentication, RekeyLimit,
+# RhostsRSAAuthentication, RSAAuthentication, X11DisplayOffset, X11MaxDisplays,
+# X11Forwarding and X11UseLocalHost.
+
+{% for match in sshd_Matches | default([]) %}
+Match
+{%- if match.user is defined and  match != '' %} User {{ match.user }}{% endif %}
+{%- if match.group is defined and  match != '' %} Group {{ match.group }}{% endif %}
+{%- if match.host is defined and  match != '' %} Host {{ match.host }}{% endif %}
+{%- if match.local_address is defined and  match != '' %} LocalAddress {{ match.local_address }}{% endif %}
+{%- if match.local_port is defined and  match != '' %} LocalPort {{ match.local_port }}{% endif %}
+{%- if match.address is defined and  match != '' %} Address {{ match.address }}{% endif %}
+
+{% for key, value in match.keywords.iteritems() %}
+    {{ key }} {{ value }}
+{% endfor %}
+
+{% endfor %}
+# vim: ft=sshconfig:ts=4:sw=4

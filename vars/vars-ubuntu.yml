@@ -1,0 +1,7 @@
+---
+
+openssh_packages:
+ - "openssh-server{% if ssh_version not in ['', 'latest'] %}-{{ ssh_version }}{% endif %}"
+ - "openssh-client{% if ssh_version not in ['', 'latest'] %}-{{ ssh_version }}{% endif %}"
+
+openssh_sshd_service: ssh

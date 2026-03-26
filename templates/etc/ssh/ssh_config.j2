@@ -1,0 +1,850 @@
+# {{ ansible_managed }}
+# vim: ft=sshconfig:ts=4:sw=4
+#
+#       $OpenBSD: ssh_config,v 1.28 2013/09/16 11:35:43 sthen Exp $
+
+# This is the ssh client system-wide configuration file.  See
+# ssh_config(5) for more information.  This file provides defaults for
+# users, and the values can be changed in per-user configuration files
+# or on the command line.
+
+# Configuration data is parsed as follows:
+#  1. command line options
+#  2. user-specific file
+#  3. system-wide file
+# Any configuration value is only changed the first time it is set.
+# Thus, host-specific definitions should be at the beginning of the
+# configuration file, and defaults at the end.
+
+# Site-wide defaults for some commonly used options.  For a comprehensive
+# list of available options, their meanings and defaults, please see the
+# ssh_config(5) man page.
+
+{% for item in ssh_Hosts | default([]) + ssh_Matches | default([]) | list if item.Host is defined or item.Match is defined %}
+{% if item.Host is defined %}
+Host {{ item.Host }}
+{% elif item.Match is defined %}
+Match {{ item.Match }}
+{% endif %}
+    ## General Behaviour ##
+
+{% if item.IgnoreUnknown is defined and item.IgnoreUnknown != omit and item.IgnoreUnknown != '' %}
+    # Specifies a pattern-list of unknown options to be ignored if they are
+    # encountered in configuration parsing. This may be used to suppress errors
+    # if ssh_config contains options that are unrecognised by ssh(1). It is
+    # recommended that IgnoreUnknown be listed early in the configuration file as
+    # it will not be applied to unknown options that appear before it.
+    IgnoreUnknown {{ item.IgnoreUnknown }}
+{% endif %}
+{% if item.LogLevel is defined and item.LogLevel != omit and item.LogLevel != '' %}
+    # Gives the verbosity level that is used when logging messages from ssh(1).
+    # The possible values are: QUIET, FATAL, ERROR, INFO, VERBOSE, DEBUG, DEBUG1,
+    # DEBUG2, and DEBUG3. The default is INFO. DEBUG and DEBUG1 are equivalent.
+    # DEBUG2 and DEBUG3 each specify higher levels of verbose output.
+    LogLevel {{ item.LogLevel }}
+{% endif %}
+{% if item.BatchMode is defined and item.BatchMode != omit and item.BatchMode != '' %}
+    # If set to "yes", passphrase/password querying will be disabled. This
+    # option is useful in scripts and other batch jobs where no user is present
+    # to supply the password. The argument must be "yes" or "no". The default
+    # is "no".
+    BatchMode {{ item.BatchMode }}
+{% endif %}
+{% if item.Protocol is defined and item.Protocol != omit and item.Protocol != '' %}
+    # Specifies the protocol versions ssh(1) should support in order of
+    # preference. The possible values are '1' and '2'. Multiple versions must
+    # be comma-separated. When this option is set to "2,1" ssh will try version
+    # 2 and fall back to version 1 if version 2 is not available. The default is
+    # '2'.
+    Protocol {{ item.Protocol }}
+{% endif %}
+{% if item.HostName is defined and item.HostName != omit and item.HostName != '' %}
+    # Specifies the real host name to log into. This can be used to specify
+    # nicknames or abbreviations for hosts. If the hostname contains the
+    # character sequence '%h', then this will be replaced with the host name
+    # speci‐ fied on the command line (this is useful for manipulating
+    # unqualified names). The default is the name given on the command line.
+    # Numeric IP addresses are also permitted (both on the command line and in
+    # HostName specifications).
+    HostName {{ item.HostName }}
+{% endif %}
+{% if item.EscapeChar is defined and item.EscapeChar != omit and item.EscapeChar != '' %}
+    # Sets the escape character (default: '~'). The escape character can also be
+    # set on the command line. The argument should be a single character, '^'
+    # followed by a letter, or "none" to disable the escape character entirely
+    # (making the connection transparent for binary data).
+    EscapeChar {{ item.EscapeChar }}
+{% endif %}
+
+    ## Network configuration ##
+
+{% if item.AddressFamily is defined and item.AddressFamily != omit and item.AddressFamily != '' %}
+    # Specifies which address family to use when connecting. Valid arguments are
+    # "any", "inet" (use IPv4 only), or "inet6" (use IPv6 only).
+    AddressFamily {{ item.AddressFamily }}
+{% endif %}
+{% if item.BindAddress is defined and item.BindAddress != omit and item.BindAddress != '' %}
+    # Use the specified address on the local machine as the source address of the
+    # connection. Only useful on systems with more than one address. Note that
+    # this option does not work if UsePrivilegedPort is set to "yes".
+    BindAddress {{ item.BindAddress }}
+{% endif %}
+{% if item.Port is defined and item.Port != omit and item.Port != '' %}
+    # Specifies the port number to connect on the remote host. The default is 22.
+    Port {{ item.Port }}
+{% endif %}
+{% if item.ConnectionAttempts is defined and item.ConnectionAttempts != omit and item.ConnectionAttempts != '' %}
+    # Specifies the number of tries (one per second) to make before exiting. The
+    # argument must be an integer. This may be useful in scripts if the
+    # connection sometimes fails. The default is 1.
+    ConnectionAttempts {{ item.ConnectionAttempts }}
+{% endif %}
+{% if item.ConnectTimeout is defined and item.ConnectTimeout != omit and item.ConnectTimeout != '' %}
+    # Specifies the timeout (in seconds) used when connecting to the SSH server,
+    # instead of using the default system TCP timeout. This value is used only
+    # when the target is down or really unreachable, not when it refuses the
+    # connection.
+    ConnectTimeout {{ item.ConnectTimeout }}
+{% endif %}
+{% if item.Compression is defined and item.Compression != omit and item.Compression != '' %}
+    # Specifies whether to use compression. The argument must be "yes" or "no".
+    # The default is "no".
+    Compression {{ item.Compression }}
+{% endif %}
+{% if item.CompressionLevel is defined and item.CompressionLevel != omit and item.CompressionLevel != '' %}
+    # Specifies the compression level to use if compression is enabled. The
+    # argument must be an integer from 1 (fast) to 9 (slow, best). The default
+    # level is 6, which is good for most applications. The meaning of the values
+    # is the same as in gzip(1). Note that this option applies to protocol
+    # version 1 only.
+    CompressionLevel {{ item.CompressionLevel }}
+{% endif %}
+{% if item.ControlMaster is defined and item.ControlMaster != omit and item.ControlMaster != '' %}
+    # Enables the sharing of multiple sessions over a single network connection.
+    # When set to "yes", ssh(1) will listen for connections on a control socket
+    # specified using the ControlPath argument. Additional sessions can connect
+    # to this socket using the same ControlPath with ControlMaster set to "no"
+    # (the default). These sessions will try to reuse the master instance's
+    # network connection rather than initiating new ones, but will fall back to
+    # connecting normally if the control socket does not exist, or is not
+    # listening.
+    #
+    # Setting this to "ask" will cause ssh to listen for control connections, but
+    # require confirmation using the SSH_ASKPASS program before they are accepted
+    # (see ssh-add(1) for details). If the ControlPath cannot be opened, ssh
+    # will continue without connecting to a master instance.
+    #
+    # X11 and ssh-agent(1) forwarding is supported over these multiplexed
+    # connections, however the display and agent forwarded will be the one
+    # belonging to the master connection i.e. it is not possible to forward
+    # multiple displays or agents.
+    #
+    # Two additional options allow for opportunistic multiplexing: try to use a
+    # master connection but fall back to creating a new one if one does not
+    # already exist. These options are: "auto" and "autoask". The latter
+    # requires confirmation like the "ask" option.
+    ControlMaster {{ item.ControlMaster }}
+{% endif %}
+{% if item.ControlPath is defined and item.ControlPath != omit and item.ControlPath != '' %}
+    # Specify the path to the control socket used for connection sharing as
+    # described in the ControlMaster section above or the string "none" to
+    # disable connection sharing. In the path, '%L' will be substituted by the
+    # first component of the local host name, '%l' will be substituted by the
+    # local host name (including any domain name), '%h' will be substituted by
+    # the target host name, '%n' will be substituted by the original target host
+    # name specified on the command line, '%p' the destination port, '%r' by the
+    # remote login username, and '%u' by the username of the user running ssh(1).
+    # It is recommended that any ControlPath used for opportunis‐ tic connection
+    # sharing include at least %h, %p, and %r. This ensures that shared
+    # connections are uniquely identified.
+    ControlPath {{ item.ControlPath }}
+{% endif %}
+{% if item.ControlPersist is defined and item.ControlPersist != omit and item.ControlPersist != '' %}
+    # When used in conjunction with ControlMaster, specifies that the master
+    # connection should remain open in the background (waiting for future client
+    # connections) after the initial client connection has been closed. If set
+    # to "no", then the master connection will not be placed into the background,
+    # and will close as soon as the initial client connection is closed. If set
+    # to "yes", then the master connection will remain in the back‐ ground
+    # indefinitely (until killed or closed via a mechanism such as the ssh(1) "-O
+    # exit" option). If set to a time in seconds, or a time in any of the
+    # formats documented in sshd_config(5), then the backgrounded mas‐ ter
+    # connection will automatically terminate after it has remained idle (with no
+    # client connections) for the specified time.
+    ControlPersist {{ item.ControlPersist }}
+{% endif %}
+{% if item.IPQoS is defined and item.IPQoS != omit and item.IPQoS != '' %}
+    # Specifies the IPv4 type-of-service or DSCP class for connections. Accepted
+    # values are "af11", "af12", "af13", "af21", "af22", "af23", "af31", "af32",
+    # "af33", "af41", "af42", "af43", "cs0", "cs1", "cs2", "cs3", "cs4", "cs5",
+    # "cs6", "cs7", "ef", "lowdelay", "throughput", "reliability", or a numeric
+    # value. This option may take one or two arguments, separated by whitespace.
+    # If one argument is specified, it is used as the packet class
+    # unconditionally. If two values are specified, the first is automatically
+    # selected for interactive sessions and the second for non-interactive
+    # sessions. The default is "lowdelay" for interactive sessions and
+    # "throughput" for non-interactive sessions.
+    IPQoS {{ item.IPQoS }}
+{% endif %}
+{% if item.TCPKeepAlive is defined and item.TCPKeepAlive != omit and item.TCPKeepAlive != '' %}
+    # Specifies whether the system should send TCP keepalive messages to the other
+    # side. If they are sent, death of the connection or crash of one of the
+    # machines will be properly noticed. However, this means that connections
+    # will die if the route is down temporarily, and some people find it annoying.
+    #
+    # The default is "yes" (to send TCP keepalive messages), and the client will
+    # notice if the network goes down or the remote host dies. This is important
+    # in scripts, and many users want it too.
+    #
+    # To disable TCP keepalive messages, the value should be set to "no".
+    TCPKeepAlive {{ item.TCPKeepAlive }}
+{% endif %}
+{% if item.ServerAliveCountMax is defined and item.ServerAliveCountMax != omit and item.ServerAliveCountMax != '' %}
+    # Sets the number of server alive messages (see below) which may be sent
+    # without ssh(1) receiving any messages back from the server. If this
+    # threshold is reached while server alive messages are being sent, ssh will
+    # disconnect from the server, terminating the session. It is important to
+    # note that the use of server alive messages is very different from
+    # TCPKeepAlive (below). The server alive messages are sent through the
+    # encrypted channel and therefore will not be spoofable. The TCP keepalive
+    # option enabled by TCPKeepAlive is spoofable. The server alive mechanism is
+    # valuable when the client or server depend on knowing when a connec‐ tion has
+    # become inactive.
+    #
+    # The default value is 3. If, for example, ServerAliveInterval (see below) is
+    # set to 15 and ServerAliveCountMax is left at the default, if the server
+    # becomes unresponsive, ssh will disconnect after approximately 45 seconds.
+    # This option applies to protocol version 2 only.
+    ServerAliveCountMax {{ item.ServerAliveCountMax }}
+{% endif %}
+{% if item.ServerAliveInterval is defined and item.ServerAliveInterval != omit and item.ServerAliveInterval != '' %}
+    # Sets a timeout interval in seconds after which if no data has been received
+    # from the server, ssh(1) will send a message through the encrypted channel to
+    # request a response from the server. The default is 0, indicat‐ ing that
+    # these messages will not be sent to the server. This option applies to
+    # protocol version 2 only.
+    ServerAliveInterval {{ item.ServerAliveInterval }}
+{% endif %}
+{% if item.UsePrivilegedPort is defined and item.UsePrivilegedPort != omit and item.UsePrivilegedPort != '' %}
+    # Specifies whether to use a privileged port for outgoing connections. The
+    # argument must be "yes" or "no". The default is "no". If set to "yes",
+    # ssh(1) must be setuid root. Note that this option must be set to "yes" for
+    # RhostsRSAAuthentication with older servers.
+    UsePrivilegedPort {{ item.UsePrivilegedPort }}
+{% endif %}
+{% if item.ProxyCommand is defined and item.ProxyCommand != omit and item.ProxyCommand != '' %}
+    # Specifies the command to use to connect to the server. The command string
+    # extends to the end of the line, and is executed with the user's shell. In
+    # the command string, any occurrence of '%h' will be substituted by the host
+    # name to connect, '%p' by the port, and '%r' by the remote user name. The
+    # command can be basically anything, and should read from its standard input
+    # and write to its standard output. It should eventually connect an sshd(8)
+    # server running on some machine, or execute sshd -i somewhere. Host key
+    # management will be done using the HostName of the host being connected
+    # (defaulting to the name typed by the user). Setting the command to "none"
+    # disables this option entirely. Note that CheckHostIP is not available for
+    # connects with a proxy command.
+    #
+    # This directive is useful in conjunction with nc(1) and its proxy support.
+    # For example, the following directive would connect via an HTTP proxy at
+    # 192.0.2.0:
+    #
+    # ProxyCommand /usr/bin/nc -X connect -x 192.0.2.0:8080 %h %p
+    ProxyCommand {{ item.ProxyCommand }}
+{% endif %}
+{% if item.ProxyUseFdpass is defined and item.ProxyUseFdpass != omit and item.ProxyUseFdpass != '' %}
+    # Specifies that ProxyCommand will pass a connected file descriptor back to
+    # ssh(1) instead of continuing to execute and pass data. The default is "no".
+    ProxyUseFdpass {{ item.ProxyUseFdpass }}
+{% endif %}
+
+    ## Authentication ##
+
+{% if item.PreferredAuthentications is defined and item.PreferredAuthentications != omit and item.PreferredAuthentications != [] %}
+    # Specifies the order in which the client should try protocol 2 authentication
+    # methods. This allows a client to prefer one method (e.g. keyboard-
+    # interactive) over another method (e.g. password). The default is:
+    #
+    # gssapi-with-mic,hostbased,publickey,
+    # keyboard-interactive,password
+    PreferredAuthentications {{ item.PreferredAuthentications | join(',') }}
+{% endif %}
+{% if item.HostbasedAuthentication is defined and item.HostbasedAuthentication != omit and item.HostbasedAuthentication != '' %}
+    # Specifies whether to try rhosts based authentication with public key
+    # authentication. The argument must be "yes" or "no". The default is "no".
+    # This option applies to protocol version 2 only and is similar to
+    # RhostsRSAAuthentication.
+    HostbasedAuthentication {{ item.HostbasedAuthentication }}
+{% endif %}
+{% if item.PasswordAuthentication is defined and item.PasswordAuthentication != omit and item.PasswordAuthentication != '' %}
+    # Specifies whether to use password authentication. The argument to this
+    # keyword must be "yes" or "no". The default is "yes".
+    PasswordAuthentication {{ item.PasswordAuthentication }}
+{% endif %}
+{% if item.RhostsRSAAuthentication is defined and item.RhostsRSAAuthentication != omit and item.RhostsRSAAuthentication != '' %}
+    # Specifies whether to try rhosts based authentication with RSA host
+    # authentication. The argument must be "yes" or "no". The default is "no".
+    # This option applies to protocol version 1 only and requires ssh(1) to be
+    # setuid root.
+    RhostsRSAAuthentication {{ item.RhostsRSAAuthentication }}
+{% endif %}
+{% if item.RSAAuthentication is defined and item.RSAAuthentication != omit and item.RSAAuthentication != '' %}
+    # Specifies whether to try RSA authentication. The argument to this keyword
+    # must be "yes" or "no". RSA authentication will only be attempted if the
+    # identity file exists, or an authentication agent is running. The default is
+    # "yes". Note that this option applies to protocol version 1 only.
+    RSAAuthentication {{ item.RSAAuthentication }}
+{% endif %}
+{% if item.PubkeyAuthentication is defined and item.PubkeyAuthentication != omit and item.PubkeyAuthentication != '' %}
+    # Specifies whether to try public key authentication. The argument to this
+    # keyword must be "yes" or "no". The default is "yes". This option applies
+    # to protocol version 2 only.
+    PubkeyAuthentication {{ item.PubkeyAuthentication }}
+{% endif %}
+{% if item.GSSAPIAuthentication is defined and item.GSSAPIAuthentication != omit and item.GSSAPIAuthentication != '' %}
+    # Specifies whether user authentication based on GSSAPI is allowed. The
+    # default is "no". Note that this option applies to protocol version 2 only.
+    GSSAPIAuthentication {{ item.GSSAPIAuthentication }}
+{% endif %}
+{% if item.KbdInteractiveDevices is defined and item.KbdInteractiveDevices != omit and item.KbdInteractiveDevices != [] %}
+    # Specifies the list of methods to use in keyboard-interactive
+    # authentication. Multiple method names must be comma-separated. The
+    # default is to use the server specified list. The methods available vary
+    # depending on what the server supports. For an OpenSSH server, it may be
+    # zero or more of: "bsdauth", "pam", and "skey".
+    KbdInteractiveDevices {{ item.KbdInteractiveDevices | join(',') }}
+{% endif %}
+{% if item.KbdInteractiveAuthentication is defined and item.KbdInteractiveAuthentication != omit and item.KbdInteractiveAuthentication != '' %}
+    # Specifies whether to use keyboard-interactive authentication. The argument
+    # to this keyword must be "yes" or "no". The default is "yes".
+    KbdInteractiveAuthentication {{ item.KbdInteractiveAuthentication }}
+{% endif %}
+{% if item.ChallengeResponseAuthentication is defined and item.ChallengeResponseAuthentication != omit and item.ChallengeResponseAuthentication != '' %}
+    # Specifies whether to use challenge-response authentication. The argument
+    # to this keyword must be "yes" or "no". The default is "yes".
+    ChallengeResponseAuthentication {{ item.ChallengeResponseAuthentication }}
+{% endif %}
+{% if item.XAuthLocation is defined and item.XAuthLocation != omit and item.XAuthLocation != '' %}
+    # Specifies the full pathname of the xauth(1) program. The default is
+    # /usr/bin/xauth.
+    XAuthLocation {{ item.XAuthLocation }}
+{% endif %}
+
+    ## Security ##
+
+{% if item.CheckHostIP is defined and item.CheckHostIP != omit and item.CheckHostIP != '' %}
+    # If this flag is set to "yes", ssh(1) will additionally check the host IP
+    # address in the known_hosts file. This allows ssh to detect if a host key
+    # changed due to DNS spoofing. If the option is set to "no", the check will
+    # not be executed. The default is "yes".
+    CheckHostIP {{ item.CheckHostIP }}
+{% endif %}
+{% if item.RequestTTY is defined and item.RequestTTY != omit and item.RequestTTY != '' %}
+    # Specifies whether to request a pseudo-tty for the session. The argument may
+    # be one of: "no" (never request a TTY), "yes" (always request a TTY when
+    # standard input is a TTY), "force" (always request a TTY) or "auto" (request
+    # a TTY when opening a login session). This option mirrors the -t and -T
+    # flags for ssh(1).
+    RequestTTY {{ item.RequestTTY }}
+{% endif %}
+{% if item.EnableSSHKeysign is defined and item.EnableSSHKeysign != omit and item.EnableSSHKeysign != '' %}
+    # Setting this option to "yes" in the global client configuration file
+    # /etc/ssh/ssh_config enables the use of the helper program ssh-keysign(8)
+    # during HostbasedAuthentication. The argument must be "yes" or "no". The
+    # default is "no". This option should be placed in the non-hostspecific
+    # section. See ssh-keysign(8) for more information.
+    EnableSSHKeysign {{ item.EnableSSHKeysign }}
+{% endif %}
+{% if item.StrictHostKeyChecking is defined and item.StrictHostKeyChecking != omit and item.StrictHostKeyChecking != '' %}
+    # If this flag is set to "yes", ssh(1) will never automatically add host keys
+    # to the ~/.ssh/known_hosts file, and refuses to connect to hosts whose host
+    # key has changed. This provides maximum protection against trojan horse
+    # attacks, though it can be annoying when the /etc/ssh/ssh_known_hosts file is
+    # poorly maintained or when connections to new hosts are frequently made.
+    # This option forces the user to manually add all new hosts. If this flag is
+    # set to "no", ssh will automatically add new host keys to the user known
+    # hosts files. If this flag is set to "ask", new host keys will be added to
+    # the user known host files only after the user has con‐ firmed that is what
+    # they really want to do, and ssh will refuse to connect to hosts whose host
+    # key has changed. The host keys of known hosts will be verified
+    # automatically in all cases. The argument must be "yes", "no", or "ask".
+    # The default is "ask".
+    StrictHostKeyChecking {{ item.StrictHostKeyChecking }}
+{% endif %}
+{% if item.NoHostAuthenticationForLocalhost is defined and item.NoHostAuthenticationForLocalhost != omit and item.NoHostAuthenticationForLocalhost != '' %}
+    # This option can be used if the home directory is shared across machines.
+    # In this case localhost will refer to a different machine on each of the
+    # machines and the user will get many warnings about changed host keys.
+    # However, this option disables host authentication for localhost. The
+    # argument to this keyword must be "yes" or "no". The default is to check
+    # the host key for localhost.
+    NoHostAuthenticationForLocalhost {{ item.NoHostAuthenticationForLocalhost }}
+{% endif %}
+
+    ## Host keys and Certificates ##
+
+{% if item.IdentitiesOnly is defined and item.IdentitiesOnly != omit and item.IdentitiesOnly != '' %}
+    # Specifies that ssh(1) should only use the authentication identity files
+    # configured in the ssh_config files, even if ssh-agent(1) or a
+    # PKCS11Provider offers more identities. The argument to this keyword must
+    # be "yes" or "no". This option is intended for situations where ssh-agent
+    # offers many different identities. The default is "no".
+    IdentitiesOnly {{ item.IdentitiesOnly }}
+{% endif %}
+{% if item.IdentityFile is defined and item.IdentityFile != omit and item.IdentityFile != [] %}
+    # Specifies a file from which the user's DSA, ECDSA, ED25519 or RSA
+    # authentication identity is read. The default is ~/.ssh/identity for
+    # protocol version 1, and ~/.ssh/id_dsa, ~/.ssh/id_ecdsa, ~/.ssh/id_ed25519
+    # and ~/.ssh/id_rsa for protocol version 2. Additionally, any identities
+    # represented by the authentication agent will be used for authentication
+    # unless IdentitiesOnly is set. ssh(1) will try to load certificate informa‐
+    # tion from the filename obtained by appending -cert.pub to the path of a
+    # specified IdentityFile.
+    #
+    # The file name may use the tilde syntax to refer to a user's home directory
+    # or one of the following escape characters: '%d' (local user's home
+    # directory), '%u' (local user name), '%l' (local host name), '%h' (remote
+    # host name) or '%r' (remote user name).
+    #
+    # It is possible to have multiple identity files specified in configuration
+    # files; all these identities will be tried in sequence. Multiple
+    # IdentityFile directives will add to the list of identities tried (this
+    # behaviour differs from that of other configuration directives).
+    #
+    # IdentityFile may be used in conjunction with IdentitiesOnly to select which
+    # identities in an agent are offered during authentication.
+{% for file in item.IdentityFile %}
+    IdentityFile {{ file }}
+{% endfor %}
+{% endif %}
+{% if item.VerifyHostKeyDNS is defined and item.VerifyHostKeyDNS != omit and item.VerifyHostKeyDNS != '' %}
+    # Specifies whether to verify the remote key using DNS and SSHFP resource
+    # records. If this option is set to "yes", the client will implicitly trust
+    # keys that match a secure fingerprint from DNS. Insecure fingerprints will
+    # be handled as if this option was set to "ask". If this option is set to
+    # "ask", information on fingerprint match will be displayed, but the user will
+    # still need to confirm new host keys according to the StrictHostKeyChecking
+    # option. The argument must be "yes", "no", or "ask". The default is "no".
+    # Note that this option applies to protocol version 2 only.
+    #
+    # See also VERIFYING HOST KEYS in ssh(1).
+    VerifyHostKeyDNS {{ item.VerifyHostKeyDNS }}
+{% endif %}
+{% if item.VisualHostKey is defined and item.VisualHostKey != omit and item.VisualHostKey != '' %}
+    # If this flag is set to "yes", an ASCII art representation of the remote host
+    # key fingerprint is printed in addition to the hex fingerprint string at
+    # login and for unknown host keys. If this flag is set to "no", no
+    # fingerprint strings are printed at login and only the hex fingerprint string
+    # will be printed for unknown host keys. The default is "no".
+    VisualHostKey {{ item.VisualHostKey }}
+{% endif %}
+{% if item.HostKeyAlias is defined and item.HostKeyAlias != omit and item.HostKeyAlias != '' %}
+    # Specifies an alias that should be used instead of the real host name when
+    # looking up or saving the host key in the host key database files. This
+    # option is useful for tunneling SSH connections or for multiple servers
+    # running on a single host.
+    HostKeyAlias {{ item.HostKeyAlias }}
+{% endif %}
+{% if item.RekeyLimit is defined and item.RekeyLimit != omit and item.RekeyLimit != '' %}
+    # Specifies the maximum amount of data that may be transmitted before the
+    # session key is renegotiated, optionally followed a maximum amount of time
+    # that may pass before the session key is renegotiated. The first argu‐ ment
+    # is specified in bytes and may have a suffix of 'K', 'M', or 'G' to indicate
+    # Kilobytes, Megabytes, or Gigabytes, respectively. The default is between
+    # '1G' and '4G', depending on the cipher. The optional second value is
+    # specified in seconds and may use any of the units documented in the TIME
+    # FORMATS section of sshd_config(5). The default value for RekeyLimit is
+    # "default none", which means that rekeying is performed after the cipher's
+    # default amount of data has been sent or received and no time based rekeying
+    # is done. This option applies to protocol version 2 only.
+    RekeyLimit {{ item.RekeyLimit }}
+{% endif %}
+{% if item.PKCS11Provider is defined and item.PKCS11Provider != omit and item.PKCS11Provider != '' %}
+    # Specifies which PKCS#11 provider to use. The argument to this keyword is
+    # the PKCS#11 shared library ssh(1) should use to communicate with a PKCS#11
+    # token providing the user's private RSA key.
+    PKCS11Provider {{ item.PKCS11Provider }}
+{% endif %}
+{% if item.User is defined and item.User != omit and item.User != '' %}
+    # Specifies the user to log in as. This can be useful when a different user
+    # name is used on different machines. This saves the trouble of having to
+    # remember to give the user name on the command line.
+    User {{ item.User }}
+{% endif %}
+
+    ## Known hosts ##
+
+{% if item.UserKnownHostsFile is defined and item.UserKnownHostsFile != omit and item.UserKnownHostsFile != [] and item.UserKnownHostsFile != '' %}
+    # Specifies one or more files to use for the user host key database, separated
+    # by whitespace. The default is ~/.ssh/known_hosts, ~/.ssh/known_hosts2.
+    UserKnownHostsFile {{ item.UserKnownHostsFile | join(' ') }}
+{% endif %}
+{% if item.GlobalKnownHostsFile is defined and item.GlobalKnownHostsFile != omit and item.GlobalKnownHostsFile != '' %}
+    # Specifies one or more files to use for the global host key database,
+    # separated by whitespace. The default is /etc/ssh/ssh_known_hosts,
+    # /etc/ssh/ssh_known_hosts2.
+    GlobalKnownHostsFile {{ item.GlobalKnownHostsFile }}
+{% endif %}
+{% if item.HashKnownHosts is defined and item.HashKnownHosts != omit and item.HashKnownHosts != '' %}
+    # Indicates that ssh(1) should hash host names and addresses when they are
+    # added to ~/.ssh/known_hosts. These hashed names may be used normally by
+    # ssh(1) and sshd(8), but they do not reveal identifying information should
+    # the file's contents be disclosed. The default is "no". Note that existing
+    # names and addresses in known hosts files will not be converted
+    # automatically, but may be manually hashed using ssh-keygen(1).
+    HashKnownHosts {{ item.HashKnownHosts }}
+{% endif %}
+
+    ## Users login ##
+
+{% if item.LocalCommand is defined and item.LocalCommand != omit and item.LocalCommand != '' %}
+    # Specifies a command to execute on the local machine after successfully
+    # connecting to the server. The command string extends to the end of the
+    # line, and is executed with the user's shell. The following escape
+    # character substitutions will be performed: '%d' (local user's home
+    # directory), '%h' (remote host name), '%l' (local host name), '%n' (host
+    # name as provided on the command line), '%p' (remote port), '%r' (remote
+    # user name) or '%u' (local user name).
+    #
+    # The command is run synchronously and does not have access to the session of
+    # the ssh(1) that spawned it. It should not be used for interactive
+    # commands.
+    #
+    # This directive is ignored unless PermitLocalCommand has been enabled.
+    LocalCommand {{ item.LocalCommand }}
+{% endif %}
+{% if item.PermitLocalCommand is defined and item.PermitLocalCommand != omit and item.PermitLocalCommand != '' %}
+    # Allow local command execution via the LocalCommand option or using the
+    # !command escape sequence in ssh(1). The argument must be "yes" or "no".
+    # The default is "no".
+    PermitLocalCommand {{ item.PermitLocalCommand }}
+{% endif %}
+{% if item.NumberOfPasswordPrompts is defined and item.NumberOfPasswordPrompts != omit and item.NumberOfPasswordPrompts != '' %}
+    # Specifies the number of password prompts before giving up. The argument to
+    # this keyword must be an integer. The default is 3.
+    NumberOfPasswordPrompts {{ item.NumberOfPasswordPrompts }}
+{% endif %}
+{% if item.SendEnv is defined and item.SendEnv != omit and item.SendEnv != [] %}
+    # Specifies what variables from the local environ(7) should be sent to the
+    # server. Note that environment passing is only supported for protocol 2.
+    # The server must also support it, and the server must be configured to accept
+    # these environment variables. Note that the TERM environment variable is
+    # always sent whenever a pseudo-terminal is requested as it is required by the
+    # protocol. Refer to AcceptEnv in sshd_config(5) for how to configure the
+    # server. Variables are specified by name, which may contain wildcard
+    # characters. Multiple environment variables may be separated by whitespace
+    # or spread across multiple SendEnv directives. The default is not to send
+    # any environment variables.
+    #
+    # See PATTERNS for more information on patterns.
+    SendEnv {{ item.SendEnv | join(' ') }}
+{% endif %}
+
+    ## Ciphers and hashing algorithms ##
+
+{% if item.Cipher is defined and item.Cipher != omit and item.Cipher != '' %}
+    # Specifies the cipher to use for encrypting the session in protocol version
+    # 1. Currently, "blowfish", "3des", and "des" are supported. des is only
+    # supported in the ssh(1) client for interoperability with legacy protocol 1
+    # implementations that do not support the 3des cipher. Its use is strongly
+    # discouraged due to cryptographic weaknesses. The default is "3des".
+    Cipher {{ item.Cipher }}
+{% endif %}
+{% if item.Ciphers is defined and item.Ciphers != omit and item.Ciphers != [] %}
+    # Specifies the ciphers allowed for protocol version 2 in order of
+    # preference. Multiple ciphers must be comma-separated. The supported
+    # ciphers are:
+    #
+    # "3des-cbc", "aes128-cbc", "aes192-cbc", "aes256-cbc", "aes128-ctr",
+    # "aes192-ctr", "aes256-ctr", "aes128-gcm@openssh.com", "aes256-gcm@openssh.com",
+    # "arcfour128", "arcfour256", "arcfour", "blowfish-cbc", "cast128-cbc", and
+    # "chacha20-poly1305@openssh.com".
+    #
+    # The list of available ciphers may also be obtained using the -Q option of
+    # ssh(1).
+    Ciphers {{ item.Ciphers | join(',') }}
+{% endif %}
+{% if item.HostKeyAlgorithms is defined and item.HostKeyAlgorithms != omit and item.HostKeyAlgorithms != [] %}
+    # Specifies the protocol version 2 host key algorithms that the client wants
+    # to use in order of preference. If hostkeys are known for the destination
+    # host then this default is modified to prefer their algorithms.
+    HostKeyAlgorithms {{ item.HostKeyAlgorithms | join(',') }}
+{% endif %}
+{% if item.KexAlgorithms is defined and item.KexAlgorithms != omit and item.KexAlgorithms != [] %}
+    # Specifies the available KEX (Key Exchange) algorithms. Multiple algorithms
+    # must be comma-separated.
+    KexAlgorithms {{ item.KexAlgorithms | join(',') }}
+{% endif %}
+{% if item.MACs is defined and item.MACs != omit and item.MACs != [] %}
+    # Specifies the MAC (message authentication code) algorithms in order of
+    # preference. The MAC algorithm is used in protocol version 2 for data
+    # integrity protection. Multiple algorithms must be comma-separated. The
+    # algorithms that contain "-etm" calculate the MAC after encryption (encrypt-
+    # then-mac). These are considered safer and their use recommended.
+    MACs {{ item.MACs | join(',') }}
+{% endif %}
+{% if item.GSSAPIKexAlgorithms is defined and item.GSSAPIKexAlgorithms != omit and item.GSSAPIKexAlgorithms != [] %}
+    # Specifies the protocol version 2 host key algorithms that the client wants
+    # to use in order of preference. If hostkeys are known for the destination
+    # host then this default is modified to prefer their algorithms.
+    GSSAPIKexAlgorithms {{ item.GSSAPIKexAlgorithms | join(',') }}
+{% endif %}
+
+    ## Forwarding ##
+
+{% if item.ClearAllForwardings is defined and item.ClearAllForwardings != omit and item.ClearAllForwardings != '' %}
+    # Specifies that all local, remote, and dynamic port forwardings specified in
+    # the configuration files or on the command line be cleared. This option is
+    # primarily useful when used from the ssh(1) command line to clear port
+    # forwardings set in configuration files, and is automatically set by scp(1)
+    # and sftp(1). The argument must be "yes" or "no". The default is "no".
+    ClearAllForwardings {{ item.ClearAllForwardings }}
+{% endif %}
+{% if item.DynamicForward is defined and item.DynamicForward != omit and item.DynamicForward != [] %}
+    # Specifies that a TCP port on the local machine be forwarded over the secure
+    # channel, and the application protocol is then used to determine where to
+    # connect to from the remote machine.
+    #
+    # The argument must be [bind_address:]port. IPv6 addresses can be specified
+    # by enclosing addresses in square brackets. By default, the local port is
+    # bound in accordance with the GatewayPorts setting. However, an explicit
+    # bind_address may be used to bind the connection to a specific address. The
+    # bind_address of "localhost" indicates that the listening port be bound for
+    # local use only, while an empty address or '*' indicates that the port
+    # should be available from all interfaces.
+    #
+    # Currently the SOCKS4 and SOCKS5 protocols are supported, and ssh(1) will
+    # act as a SOCKS server. Multiple forwardings may be specified, and
+    # additional forwardings can be given on the command line. Only the
+    # superuser can forward privileged ports.
+{% for forward in item.DynamicForward %}
+    DynamicForward {{ forward }}
+{% endfor %}
+{% endif %}
+{% if item.LocalForward is defined and item.LocalForward != omit and item.LocalForward != [] %}
+    # Specifies that a TCP port on the local machine be forwarded over the secure
+    # channel to the specified host and port from the remote machine. The first
+    # argument must be [bind_address:]port and the second argument must be
+    # host:hostport. IPv6 addresses can be specified by enclosing addresses in
+    # square brackets. Multiple forwardings may be specified, and additional
+    # forwardings can be given on the command line. Only the superuser can
+    # forward privileged ports. By default, the local port is bound in
+    # accordance with the GatewayPorts setting. However, an explicit
+    # bind_address may be used to bind the connection to a specific address. The
+    # bind_address of "localhost" indicates that the listening port be bound for
+    # local use only, while an empty address or '*' indicates that the port
+    # should be available from all interfaces.
+{% for forward in item.LocalForward %}
+    LocalForward {{ forward }}
+{% endfor %}
+{% endif %}
+{% if item.RemoteForward is defined and item.RemoteForward != omit and item.RemoteForward != [] %}
+    # Specifies that a TCP port on the remote machine be forwarded over the secure
+    # channel to the specified host and port from the local machine. The first
+    # argument must be [bind_address:]port and the second argument must be
+    # host:hostport. IPv6 addresses can be specified by enclosing addresses in
+    # square brackets. Multiple forwardings may be specified, and additional
+    # forwardings can be given on the command line. Privileged ports can be
+    # forwarded only when logging in as root on the remote machine.
+    #
+    # If the port argument is '0', the listen port will be dynamically allocated
+    # on the server and reported to the client at run time.
+    #
+    # If the bind_address is not specified, the default is to only bind to
+    # loopback addresses. If the bind_address is '*' or an empty string, then the
+    # forwarding is requested to listen on all interfaces. Specifying a remote
+    # bind_address will only succeed if the server's GatewayPorts option is
+    # enabled (see sshd_config(5)).
+{% for forward in item.RemoteForward %}
+    RemoteForward {{ forward }}
+{% endfor %}
+{% endif %}
+{% if item.ExitOnForwardFailure is defined and item.ExitOnForwardFailure != omit and item.ExitOnForwardFailure != '' %}
+    # Specifies whether ssh(1) should terminate the connection if it cannot set
+    # up all requested dynamic, tunnel, local, and remote port forwardings. The
+    # argument must be "yes" or "no". The default is "no".
+    ExitOnForwardFailure {{ item.ExitOnForwardFailure }}
+{% endif %}
+{% if item.AddKeysToAgent is defined and item.AddKeysToAgent != omit and item.AddKeysToAgent != '' %}
+    # Specifies whether keys should be automatically added to a running
+    # ssh-agent(1).  If this option is set to yes and a key is loaded from a
+    # file, the key and its passphrase are added to the agent with the default
+    # lifetime, as if by ssh-add(1).  If this option is set to ask, ssh(1) will
+    # require confirmation using the SSH_ASKPASS program before adding a key
+    # (see ssh-add(1) for details).  If this option is set to confirm, each use
+    # of the key must be confirmed, as if the -c option was specified to
+    # ssh-add(1).  If this option is set to no, no keys are added to the agent.
+    # The argument must be yes, confirm, ask, or no (the default).
+    AddKeysToAgent {{ item.AddKeysToAgent }}
+{% endif %}
+{% if item.ForwardAgent is defined and item.ForwardAgent != omit and item.ForwardAgent != '' %}
+    # Specifies whether the connection to the authentication agent (if any) will
+    # be forwarded to the remote machine. The argument must be "yes" or "no".
+    # The default is "no".
+    #
+    # Agent forwarding should be enabled with caution. Users with the ability to
+    # bypass file permissions on the remote host (for the agent's Unix-domain
+    # socket) can access the local agent through the forwarded connection. An
+    # attacker cannot obtain key material from the agent, however they can
+    # perform operations on the keys that enable them to authenticate using the
+    # identities loaded into the agent.
+    ForwardAgent {{ item.ForwardAgent }}
+{% endif %}
+{% if item.ForwardX11 is defined and item.ForwardX11 != omit and item.ForwardX11 != '' %}
+    # Specifies whether X11 connections will be automatically redirected over the
+    # secure channel and DISPLAY set. The argument must be "yes" or "no". The
+    # default is "no".
+    #
+    # X11 forwarding should be enabled with caution. Users with the ability to
+    # bypass file permissions on the remote host (for the user's X11
+    # authorization database) can access the local X11 display through the
+    # forwarded connection. An attacker may then be able to perform activities
+    # such as keystroke monitoring if the ForwardX11Trusted option is also
+    # enabled.
+    ForwardX11 {{ item.ForwardX11 }}
+{% endif %}
+{% if item.ForwardX11Timeout is defined and item.ForwardX11Timeout != omit and item.ForwardX11Timeout != '' %}
+    # Specify a timeout for untrusted X11 forwarding using the format described
+    # in the TIME FORMATS section of sshd_config(5). X11 connections received by
+    # ssh(1) after this time will be refused. The default is to disable
+    # untrusted X11 forwarding after twenty minutes has elapsed.
+    ForwardX11Timeout {{ item.ForwardX11Timeout }}
+{% endif %}
+{% if item.ForwardX11Trusted is defined and item.ForwardX11Trusted != omit and item.ForwardX11Trusted != '' %}
+    # If this option is set to "yes", remote X11 clients will have full access to
+    # the original X11 display.
+    #
+    # If this option is set to "no", remote X11 clients will be considered
+    # untrusted and prevented from stealing or tampering with data belonging to
+    # trusted X11 clients. Furthermore, the xauth(1) token used for the session
+    # will be set to expire after 20 minutes. Remote clients will be refused
+    # access after this time.
+    #
+    # The default is "no".
+    #
+    # See the X11 SECURITY extension specification for full details on the
+    # restrictions imposed on untrusted clients.
+    ForwardX11Trusted {{ item.ForwardX11Trusted }}
+{% endif %}
+{% if item.GatewayPorts is defined and item.GatewayPorts != omit and item.GatewayPorts != '' %}
+    # Specifies whether remote hosts are allowed to connect to local forwarded
+    # ports. By default, ssh(1) binds local port forwardings to the loopback
+    # address. This prevents other remote hosts from connecting to forwarded
+    # ports. GatewayPorts can be used to specify that ssh should bind local port
+    # forwardings to the wildcard address, thus allowing remote hosts to connect
+    # to forwarded ports. The argument must be "yes" or "no". The default is
+    # "no".
+    GatewayPorts {{ item.GatewayPorts }}
+{% endif %}
+{% if item.Tunnel is defined and item.Tunnel != omit and item.Tunnel != '' %}
+    # Request tun(4) device forwarding between the client and the server. The
+    # argument must be "yes", "point-to-point" (layer 3), "ethernet" (layer 2), or
+    # "no". Specifying "yes" requests the default tunnel mode, which is "point-
+    # to-point". The default is "no".
+    Tunnel {{ item.Tunnel }}
+{% endif %}
+{% if item.TunnelDevice is defined and item.TunnelDevice != omit and item.TunnelDevice != '' %}
+    # Specifies the tun(4) devices to open on the client (local_tun) and the
+    # server (remote_tun).
+    #
+    # The argument must be local_tun[:remote_tun]. The devices may be specified
+    # by numerical ID or the keyword "any", which uses the next available tunnel
+    # device. If remote_tun is not specified, it defaults to "any". The default
+    # is "any:any".
+    TunnelDevice {{ item.TunnelDevice }}
+{% endif %}
+
+    ## Domain Names management ##
+
+{% if item.CanonicalDomains is defined and item.CanonicalDomains != omit and item.CanonicalDomains != '' %}
+    # When CanonicalizeHostname is enabled, this option specifies the list of
+    # domain suffixes in which to search for the specified destination host.
+    CanonicalDomains {{ item.CanonicalDomains }}
+{% endif %}
+{% if item.CanonicalizeFallbackLocal is defined and item.CanonicalizeFallbackLocal != omit and item.CanonicalizeFallbackLocal != '' %}
+    # Specifies whether to fail with an error when hostname canonicalization
+    # fails. The default, "yes", will attempt to look up the unqualified
+    # hostname using the system resolver's search rules. A value of "no" will
+    # cause ssh(1) to fail instantly if CanonicalizeHostname is enabled and the
+    # target hostname cannot be found in any of the domains specified by
+    # CanonicalDomains.
+    CanonicalizeFallbackLocal {{ item.CanonicalizeFallbackLocal }}
+{% endif %}
+{% if item.CanonicalizeHostname is defined and item.CanonicalizeHostname != omit and item.CanonicalizeHostname != '' %}
+    # Controls whether explicit hostname canonicalization is performed. The
+    # default, "no", is not to perform any name rewriting and let the system
+    # resolver handle all hostname lookups. If set to "yes" then, for connec‐
+    # tions that do not use a ProxyCommand, ssh(1) will attempt to canonicalize
+    # the hostname specified on the command line using the CanonicalDomains
+    # suffixes and CanonicalizePermittedCNAMEs rules. If CanonicalizeHostname is
+    # set to "always", then canonicalization is applied to proxied connections
+    # too.
+    #
+    # If this option is enabled and canonicalisation results in the target
+    # hostname changing, then the configuration files are processed again using
+    # the new target name to pick up any new configuration in matching Host
+    # stanzas.
+    CanonicalizeHostname {{ item.CanonicalizeHostname }}
+{% endif %}
+{% if item.CanonicalizeMaxDots is defined and item.CanonicalizeMaxDots != omit and item.CanonicalizeMaxDots != '' %}
+    # Specifies the maximum number of dot characters in a hostname before
+    # canonicalization is disabled. The default, "1", allows a single dot (i.e.
+    # hostname.subdomain).
+    CanonicalizeMaxDots {{ item.CanonicalizeMaxDots }}
+{% endif %}
+{% if item.CanonicalizePermittedCNAMEs is defined and item.CanonicalizePermittedCNAMEs != omit and item.CanonicalizePermittedCNAMEs != [] %}
+    # Specifies rules to determine whether CNAMEs should be followed when
+    # canonicalizing hostnames. The rules consist of one or more arguments of
+    # source_domain_list:target_domain_list, where source_domain_list is a pat‐
+    # tern-list of domains that may follow CNAMEs in canonicalization, and
+    # target_domain_list is a pattern-list of domains that they may resolve to.
+    #
+    # For example, "*.a.example.com:*.b.example.com,*.c.example.com" will allow
+    # hostnames matching "*.a.example.com" to be canonicalized to names in the
+    # "*.b.example.com" or "*.c.example.com" domains.
+    CanonicalizePermittedCNAMEs {{ item.CanonicalizePermittedCNAMEs | join(':') }}
+{% endif %}
+
+    ## GSS-API Configuration ##
+
+{% if item.GSSAPIDelegateCredentials is defined and item.GSSAPIDelegateCredentials != omit and item.GSSAPIDelegateCredentials != '' %}
+    # Forward (delegate) credentials to the server. The default is "no". Note
+    # that this option applies to protocol version 2 connections using GSSAPI.
+    GSSAPIDelegateCredentials {{ item.GSSAPIDelegateCredentials }}
+{% endif %}
+{% if item.GSSAPIKeyExchange is defined and item.GSSAPIKeyExchange != omit and item.GSSAPIKeyExchange != '' %}
+    # Specifies whether key exchange based on GSSAPI may be used. When using
+    # GSSAPI key exchange the server need not have a host key. The default is
+    # "no". Note that this option applies to protocol version 2 only.
+    GSSAPIKeyExchange {{ item.GSSAPIKeyExchange }}
+{% endif %}
+{% if item.GSSAPIClientIdentity is defined and item.GSSAPIClientIdentity != omit and item.GSSAPIClientIdentity != '' %}
+    # If set, specifies the GSSAPI client identity that ssh should use when
+    # connecting to the server. The default is unset, which means that the
+    # default identity will be used.
+    GSSAPIClientIdentity {{ item.GSSAPIClientIdentity }}
+{% endif %}
+{% if item.GSSAPIServerIdentity is defined and item.GSSAPIServerIdentity != omit and item.GSSAPIServerIdentity != '' %}
+    # If set, specifies the GSSAPI server identity that ssh should expect when
+    # connecting to the server. The default is unset, which means that the
+    # expected GSSAPI server identity will be determined from the target host‐
+    # name.
+    GSSAPIServerIdentity {{ item.GSSAPIServerIdentity }}
+{% endif %}
+{% if item.GSSAPIRenewalForcesRekey is defined and item.GSSAPIRenewalForcesRekey != omit and item.GSSAPIRenewalForcesRekey != '' %}
+    # If set to "yes" then renewal of the client's GSSAPI credentials will force
+    # the rekeying of the ssh connection. With a compatible server, this can
+    # delegate the renewed credentials to a session on the server. The default
+    # is "no".
+    GSSAPIRenewalForcesRekey {{ item.GSSAPIRenewalForcesRekey }}
+{% endif %}
+{% if item.GSSAPITrustDNS is defined and item.GSSAPITrustDNS != omit and item.GSSAPITrustDNS != '' %}
+    # Set to "yes to indicate that the DNS is trusted to securely canonicalize"
+    # the name of the host being connected to. If "no, the hostname entered on
+    # the" command line will be passed untouched to the GSSAPI library. The
+    # default is "no". This option only applies to protocol version 2
+    # connections using GSSAPI.
+    GSSAPITrustDNS {{ item.GSSAPITrustDNS }}
+{% endif %}
+
+{% endfor %}

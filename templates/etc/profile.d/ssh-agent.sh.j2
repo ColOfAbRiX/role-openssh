@@ -1,0 +1,23 @@
+#!/bin/bash
+#
+# Start ssh-agent
+# See: https://stackoverflow.com/a/18915067/1215156
+#
+
+SSH_ENV="$HOME/.ssh/agent-environment"
+
+function start_agent {
+    /usr/bin/ssh-agent {% if ssh_agent_keys_timeout | default('') != '' %}-t {{ ssh_agent_keys_timeout }}{% endif %} | sed 's/^echo/#echo/' > "${SSH_ENV}"
+    chmod 600 "${SSH_ENV}"
+    . "${SSH_ENV}" > /dev/null
+    chmod 0777 "${SSH_AUTH_SOCK}"
+}
+
+if [ -f "${SSH_ENV}" ] ; then
+    . "${SSH_ENV}" > /dev/null
+    ps -ef | grep ${SSH_AGENT_PID} | grep ssh-agent$ > /dev/null || {
+        start_agent;
+    }
+else
+    start_agent;
+fi

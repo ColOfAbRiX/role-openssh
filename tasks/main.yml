@@ -1,0 +1,136 @@
+---
+# tasks file for ssh-client
+
+- name: "Require Correct Linux Distribution"
+  assert:
+    that: (ansible_distribution | lower in ['redhat', 'centos']) or
+          (ansible_distribution == 'Ubuntu' and ansible_distribution_version is version('16.0.0', '>=')) or
+          (ansible_distribution == 'Debian' and ansible_distribution_version is version('6.0.0', '>='))
+    msg: "This Linux distribution '{{ ansible_distribution }} {{ ansible_distribution_version }}' is not supported by the role."
+  tags: openssh
+
+- name: "Include OS-Specific Variables"
+  include_vars: "vars-{{ ansible_distribution | lower }}.yml"
+  tags: openssh
+
+- name: "Install OpenSSH Packages with WSL compatibility"
+  block:
+    - name: "Install packages"
+      package:
+        name: "{{ openssh_packages }}"
+        state: "{% if ssh_version != 'latest' %}present{% else %}latest{% endif %}"
+        install_recommends: false
+      notify:
+        - Restart SSH
+  rescue:
+    - name: "Report SSH package installation issues"
+      debug:
+        msg: "Some SSH packages may not have installed properly. This is common in WSL environments."
+  tags: openssh
+
+
+- name: "Manage SSH Service with WSL compatibility"
+  block:
+    - name: "Start SSH Service"
+      service:
+        name: "{{ openssh_sshd_service }}"
+        state: started
+        enabled: true
+      when: ssh_server_enabled | default(True) | bool
+      register: ssh_service_start
+      failed_when: false  # Don't fail in WSL environments where service control might be limited
+
+    - name: "Manual service start if service module fails (WSL compatibility)"
+      shell: "service {{ openssh_sshd_service }} start"
+      when:
+        - ssh_server_enabled | default(True) | bool
+        - ssh_service_start.failed is defined and ssh_service_start.failed
+      failed_when: false
+
+    - name: "Stop SSH Service"
+      service:
+        name: "{{ openssh_sshd_service }}"
+        state: stopped
+        enabled: false
+      when: not ssh_server_enabled | default(True) | bool
+      register: ssh_service_stop
+      failed_when: false
+
+    - name: "Manual service stop if service module fails (WSL compatibility)"
+      shell: "service {{ openssh_sshd_service }} stop"
+      when:
+        - not ssh_server_enabled | default(True) | bool
+        - ssh_service_stop.failed is defined and ssh_service_stop.failed
+      failed_when: false
+  tags: openssh
+
+
+- name: "Shards Directory"
+  file:
+    path:  "{{ ssh_config_path }}/ansible-shards"
+    state: directory
+    mode:  '0755'
+  changed_when: false
+  tags: openssh
+
+- name: "Configuration Files"
+  template:
+    src:    "etc/ssh/{{ item }}.j2"
+    dest:   "{{ ssh_config_path }}/ansible-shards/0-{{ item }}"
+    force:  true
+    owner:  root
+    group:  root
+    mode:   '0400'
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+  loop:
+   - sshd_config
+   - ssh_config
+  tags: openssh
+
+- name: "Assemble Server Configuration"
+  assemble:
+    src:    "{{ ssh_config_path }}/ansible-shards/"
+    dest:   "{{ ssh_config_path }}/sshd_config"
+    regexp: '\d+-sshd_config.*'
+    mode:   '0600'
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+  notify:
+   - Restart SSH
+  tags: openssh
+
+- name: "Assemble Client Configuration"
+  assemble:
+    src:    "{{ ssh_config_path }}/ansible-shards/"
+    dest:   "{{ ssh_config_path }}/ssh_config"
+    regexp: '\d+-ssh_config.*'
+    mode:   '0644'
+    seuser: system_u
+    serole: object_r
+    setype: etc_t
+  tags: openssh
+
+- name: "Enable SSH Agent"
+  template:
+    src:  "etc/profile.d/ssh-agent.sh.j2"
+    dest: "/etc/profile.d/ssh-agent.sh"
+    mode: '0755'
+  when: ssh_agent_enabled | default(False) | bool
+  tags: openssh
+
+- name: "Disable SSH Agent"
+  file:
+    path:  "/etc/profile.d/ssh-agent.sh"
+    state: absent
+  when: not ssh_agent_enabled | default(False) | bool
+  tags: openssh
+
+- name: "Scripts permissions"
+  file:
+    path: "/etc/profile.d/ssh-agent.sh"
+    mode: 0755
+  when: ssh_agent_enabled | default(False) | bool
+  tags: openssh
