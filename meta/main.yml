@@ -1,26 +1,25 @@
 ---
 galaxy_info:
   author: Fabrizio Colonna <colofabrix@tin.it>
-  description: OpenSSH Server
-  company:
-  license:
-  min_ansible_version: 2.1.0
-  #
-  # Below are all platforms currently available. Just uncomment
-  # the ones that apply to your role. If you don't see your
-  # platform on this list, let us know and we'll get it added!
-  #
+  description: OpenSSH server and client configuration with comprehensive customization and WSL support
+  license: MIT
+  min_ansible_version: "2.10"
   platforms:
+    - name: Ubuntu
+      versions:
+        - all
+    - name: Debian
+      versions:
+        - all
     - name: EL
       versions:
-        - 7
-  #
-  # Below are all categories currently available. Just as with
-  # the platforms above, uncomment those that apply to your role.
-  #
-  categories:
-    - system
-    - network
+        - all
+  galaxy_tags:
+    - ssh
+    - openssh
+    - configuration
     - security
+    - network
+    - wsl
 
 dependencies: []
